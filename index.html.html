@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#12151a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Route Knowledge &mdash; Adelaide Metro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap');
+
+:root{
+  --ink:#12151a;
+  --panel:#1a1f28;
+  --panel-raised:#222834;
+  --steel:#3a4351;
+  --steel-soft:#2a303c;
+  --paper:#e9e6dc;
+  --muted:#8b93a1;
+  --yellow:#f0b429;
+  --green:#3fb37f;
+  --red:#e2543d;
+}
+*{box-sizing:border-box;}
+.rk-root{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'Inter',system-ui,sans-serif;
+  min-height:100%;
+  padding:0;
+  border-radius:12px;
+  overflow:hidden;
+}
+.rk-topbar{
+  padding:22px 24px 16px;
+  border-bottom:1px solid var(--steel-soft);
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+}
+.rk-eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.14em;
+  color:var(--yellow);
+  text-transform:uppercase;
+  margin:0 0 2px;
+}
+.rk-title{
+  font-family:'Oswald',sans-serif;
+  font-weight:700;
+  font-size:26px;
+  letter-spacing:0.02em;
+  text-transform:uppercase;
+  margin:0 0 16px;
+}
+.rk-tabs{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+@media (max-width:600px){
+  .rk-tabs{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    margin:0 -24px;
+    padding:0 24px 4px;
+  }
+  .rk-tabs::-webkit-scrollbar{ display:none; }
+  .rk-tab{ flex-shrink:0; }
+}
+.rk-tab{
+  font-family:'Oswald',sans-serif;
+  font-weight:600;
+  font-size:13px;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  background:var(--panel);
+  border:1px solid var(--steel);
+  color:var(--muted);
+  padding:8px 14px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:all .15s ease;
+  border-left:3px solid var(--line-hue, var(--steel));
+}
+.rk-tab:hover{color:var(--paper);}
+.rk-tab.active{
+  background:var(--panel-raised);
+  color:var(--paper);
+  border-color:var(--steel);
+  border-left:3px solid var(--line-hue, var(--yellow));
+}
+.rk-tab:focus-visible, .rk-btn:focus-visible, .rk-input:focus-visible, .rk-icon-btn:focus-visible{
+  outline:2px solid var(--yellow);
+  outline-offset:2px;
+}
+
+.rk-body{
+  padding:22px 24px 28px;
+}
+.rk-modebar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.rk-linelabel{
+  font-family:'Oswald',sans-serif;
+  font-size:15px;
+  letter-spacing:0.03em;
+  color:var(--paper);
+}
+.rk-linelabel .n{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--muted);
+  font-size:12px;
+  margin-left:8px;
+}
+.rk-btn{
+  font-family:'Oswald',sans-serif;
+  font-weight:600;
+  font-size:12.5px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  background:var(--panel-raised);
+  border:1px solid var(--steel);
+  color:var(--paper);
+  padding:9px 16px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:background .15s ease, transform .1s ease;
+}
+.rk-btn:hover{background:#2b3242;}
+.rk-btn:active{transform:scale(0.98);}
+.rk-btn.primary{
+  background:var(--yellow);
+  color:#241c04;
+  border-color:var(--yellow);
+}
+.rk-btn.primary:hover{background:#f5c34f;}
+.rk-btn.quiz-active{
+  background:var(--red);
+  border-color:var(--red);
+  color:#fff;
+}
+
+/* Track diagram */
+.rk-track{
+  position:relative;
+  padding-left:26px;
+}
+.rk-track::before{
+  content:"";
+  position:absolute;
+  left:9px;
+  top:14px;
+  bottom:14px;
+  width:2px;
+  background:repeating-linear-gradient(180deg, var(--steel) 0 8px, transparent 8px 14px);
+}
+.rk-seg{
+  position:relative;
+  background:var(--panel);
+  border:1px solid var(--steel-soft);
+  border-radius:8px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  animation:rkFadeIn .35s ease both;
+}
+.rk-seg::before{
+  content:"";
+  position:absolute;
+  left:-26px;
+  top:50%;
+  transform:translateY(-50%);
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:var(--ink);
+  border:2px solid var(--line-hue, var(--yellow));
+}
+@keyframes rkFadeIn{
+  from{opacity:0; transform:translateY(4px);}
+  to{opacity:1; transform:translateY(0);}
+}
+.rk-seg-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.rk-stations{
+  font-family:'Oswald',sans-serif;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:0.01em;
+}
+.rk-stations .arrow{color:var(--muted); margin:0 6px; font-weight:400;}
+.rk-tags{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:6px;
+}
+.rk-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  background:var(--panel-raised);
+  border:1px solid var(--steel-soft);
+  padding:2px 8px;
+  border-radius:4px;
+}
+.rk-board{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:600;
+  font-size:16px;
+  color:#241c04;
+  background:var(--yellow);
+  border-radius:5px;
+  padding:6px 10px;
+  min-width:64px;
+  text-align:center;
+  line-height:1.1;
+  flex-shrink:0;
+}
+.rk-board .u{display:block; font-size:8px; letter-spacing:0.06em; margin-top:1px;}
+.rk-board.hidden{
+  background:var(--panel-raised);
+  color:var(--muted);
+  border:1px dashed var(--steel);
+}
+.rk-seg-actions{
+  display:flex;
+  gap:6px;
+  margin-top:10px;
+}
+.rk-icon-btn{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  background:none;
+  border:1px solid var(--steel-soft);
+  color:var(--muted);
+  padding:5px 10px;
+  border-radius:5px;
+  cursor:pointer;
+}
+.rk-icon-btn:hover{color:var(--paper); border-color:var(--steel);}
+.rk-icon-btn.danger:hover{color:var(--red); border-color:var(--red);}
+
+/* Quiz */
+.rk-quiz-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+}
+.rk-input{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--ink);
+  border:1px solid var(--steel);
+  color:var(--paper);
+  padding:8px 10px;
+  border-radius:5px;
+  width:100px;
+  font-size:14px;
+}
+.rk-feedback{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+}
+.rk-feedback.correct{color:var(--green);}
+.rk-feedback.wrong{color:var(--red);}
+.rk-quizbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:var(--panel-raised);
+  border:1px solid var(--steel-soft);
+  border-radius:8px;
+  padding:12px 16px;
+  margin-bottom:16px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  color:var(--muted);
+}
+.rk-quizbar b{color:var(--paper);}
+
+/* Add form */
+.rk-form{
+  background:var(--panel);
+  border:1px solid var(--steel-soft);
+  border-radius:8px;
+  padding:16px;
+  margin-top:16px;
+}
+.rk-form-title{
+  font-family:'Oswald',sans-serif;
+  font-size:13px;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin:0 0 12px;
+}
+.rk-form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.rk-form-grid.full{grid-template-columns:1fr;}
+.rk-field label{
+  display:block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  margin-bottom:4px;
+}
+.rk-field input, .rk-field textarea{
+  width:100%;
+  background:var(--ink);
+  border:1px solid var(--steel);
+  color:var(--paper);
+  padding:8px 10px;
+  border-radius:5px;
+  font-family:'Inter',sans-serif;
+  font-size:13.5px;
+}
+.rk-field textarea{resize:vertical; min-height:44px;}
+.rk-form-actions{
+  margin-top:12px;
+  display:flex;
+  gap:8px;
+}
+
+.rk-empty{
+  text-align:center;
+  padding:40px 20px;
+  color:var(--muted);
+  font-size:13.5px;
+}
+.rk-empty .big{
+  font-family:'Oswald',sans-serif;
+  font-size:16px;
+  color:var(--paper);
+  margin-bottom:6px;
+}
+.rk-quiz-done{
+  text-align:center;
+  padding:30px 20px;
+}
+.rk-quiz-done .score{
+  font-family:'Oswald',sans-serif;
+  font-size:34px;
+  color:var(--yellow);
+}
+@media (max-width:480px){
+  .rk-form-grid{grid-template-columns:1fr;}
+  .rk-title{font-size:21px;}
+  .rk-topbar{padding:16px 16px 12px;}
+  .rk-body{padding:16px 16px 24px;}
+  .rk-tabs{margin:0 -16px; padding:0 16px 4px;}
+  .rk-net-node{margin-left:12px; padding-left:12px;}
+}
+.rk-net-tree{
+  margin-top:6px;
+  animation:rkFadeIn .3s ease both;
+}
+.rk-net-hub{
+  font-family:'Oswald',sans-serif;
+  font-weight:700;
+  font-size:15px;
+  letter-spacing:0.06em;
+  background:var(--panel-raised);
+  border:1px solid var(--steel);
+  border-radius:6px;
+  padding:10px 18px;
+  display:inline-block;
+  margin-bottom:6px;
+}
+.rk-net-node{
+  margin-left:20px;
+  padding-left:20px;
+  border-left:2px dashed var(--steel-soft);
+}
+.rk-net-row{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:7px 0;
+}
+.rk-net-row::before{
+  content:"";
+  position:absolute;
+  left:-20px;
+  top:50%;
+  width:18px;
+  height:2px;
+  background:var(--steel-soft);
+}
+.rk-net-junction-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.rk-net-line-btn{
+  font-family:'Oswald',sans-serif;
+  font-weight:600;
+  font-size:13.5px;
+  letter-spacing:0.02em;
+  background:var(--panel);
+  border:1px solid var(--steel-soft);
+  border-left-width:4px;
+  border-left-style:solid;
+  color:var(--paper);
+  padding:8px 14px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:background .15s ease;
+}
+.rk-net-line-btn:hover{
+  background:var(--panel-raised);
+}
+.rk-ts-toggle{
+  display:flex;
+  gap:6px;
+  margin-bottom:16px;
+}
+.rk-ts-list{
+  animation:rkFadeIn .3s ease both;
+}
+.rk-ts-station{
+  font-family:'Oswald',sans-serif;
+  font-weight:700;
+  font-size:14px;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  color:var(--paper);
+  background:var(--panel-raised);
+  border-left:3px solid var(--yellow);
+  padding:8px 14px;
+  margin:14px 0 6px;
+  border-radius:4px;
+}
+.rk-ts-station:first-child{ margin-top:0; }
+.rk-ts-row{
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  padding:7px 14px 7px 20px;
+  border-bottom:1px solid var(--steel-soft);
+}
+.rk-ts-speed{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:600;
+  font-size:14px;
+  color:var(--yellow);
+  min-width:64px;
+}
+.rk-ts-dist{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  color:var(--muted);
+  flex:1;
+}
+.rk-ts-comment{
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  color:var(--muted);
+  font-style:italic;
+html, body{
+  margin:0;
+  padding:0;
+  background:var(--ink);
+  -webkit-tap-highlight-color:transparent;
+}
+</style>
+</head>
+<body>
+
+<div class="rk-root" id="rk-root">
+  <div class="rk-topbar">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+      <div>
+        <p class="rk-eyebrow">Adelaide Metro · Rail Operations</p>
+        <h1 class="rk-title">Route Knowledge</h1>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:2px;">
+        <button class="rk-btn" id="rk-network-btn">Network Overview</button>
+        <button class="rk-btn" id="rk-track-btn">Track Speeds</button>
+      </div>
+    </div>
+    <div class="rk-tabs" id="rk-tabs"></div>
+  </div>
+  <div class="rk-body" id="rk-body"></div>
+</div>
+
+<script>
+(function(){
+  const LINES = [
+    {id:'gawler_down', name:'Gawler Line', hue:'#e2913d', direction:'Down'},
+    {id:'gawler_up', name:'Gawler Line', hue:'#e2913d', direction:'Up'},
+    {id:'grange_down', name:'Grange Line', hue:'#4f8fe2', direction:'Down'},
+    {id:'grange_up', name:'Grange Line', hue:'#4f8fe2', direction:'Up'},
+    {id:'outerharbor_down', name:'Outer Harbor Line', hue:'#8a6de2', direction:'Down'},
+    {id:'outerharbor_up', name:'Outer Harbor Line', hue:'#8a6de2', direction:'Up'},
+    {id:'portdock_down', name:'Port Dock Line', hue:'#2fb8b0', direction:'Down'},
+    {id:'portdock_up', name:'Port Dock Line', hue:'#2fb8b0', direction:'Up'},
+    {id:'seaford_down', name:'Seaford Line', hue:'#3fb37f', direction:'Down'},
+    {id:'seaford_up', name:'Seaford Line', hue:'#3fb37f', direction:'Up'},
+    {id:'belair_down', name:'Belair Line', hue:'#e2543d', direction:'Down'},
+    {id:'belair_up', name:'Belair Line', hue:'#e2543d', direction:'Up'},
+    {id:'tonsley_down', name:'Flinders Line', hue:'#d84f9e', direction:'Down'},
+    {id:'tonsley_up', name:'Flinders Line', hue:'#d84f9e', direction:'Up'},
+  ];
+
+  let activeLine = LINES[0].id;
+  let quizModeType = null; // null | 'segment' | 'range'
+  let quizRangeGuesses = {}; // pairKey -> array of per-box guess strings
+  let quizRangeBoxChecked = {}; // pairKey -> array of booleans
+  let hideSpeeds = true;
+  let showAddForm = false;
+  let showImportForm = false;
+  let segCache = {}; // lineId -> array
+
+  const root = document.getElementById('rk-root');
+  const tabsEl = document.getElementById('rk-tabs');
+  const bodyEl = document.getElementById('rk-body');
+  const networkBtn = document.getElementById('rk-network-btn');
+  const trackBtn = document.getElementById('rk-track-btn');
+  let showNetwork = false;
+  let showTrackSpeeds = false;
+  let trackSpeedsDir = 'seaford_down';
+
+  const NETWORK_TREE = [
+    { type:'line', name:'Gawler Line', lineId:'gawler_down' },
+    { type:'junction', name:'Woodville', children: [
+        { type:'line', name:'Grange Line', lineId:'grange_down' },
+        { type:'junction', name:'Alberton', children: [
+            { type:'line', name:'Port Dock Line', lineId:'portdock_down' },
+            { type:'line', name:'Outer Harbor Line', lineId:'outerharbor_down' },
+        ]},
+    ]},
+    { type:'junction', name:'Goodwood', children: [
+        { type:'line', name:'Belair Line', lineId:'belair_down' },
+        { type:'junction', name:'just before Ascot Park', children: [
+            { type:'line', name:'Seaford Line', lineId:'seaford_down' },
+            { type:'line', name:'Flinders Line', lineId:'tonsley_down' },
+        ]},
+    ]},
+  ];
+
+  function lineColor(lineId){
+    const l = LINES.find(x => x.id === lineId);
+    return l ? l.hue : '#8b93a1';
+  }
+
+  function buildNetNode(node){
+    const wrap = document.createElement('div');
+    const row = document.createElement('div');
+    row.className = 'rk-net-row';
+    if(node.type === 'line'){
+      const btn = document.createElement('button');
+      btn.className = 'rk-net-line-btn';
+      btn.style.borderLeftColor = lineColor(node.lineId);
+      btn.textContent = node.name;
+      btn.onclick = () => {
+        activeLine = node.lineId;
+        showNetwork = false;
+        renderTabs();
+        renderBody();
+      };
+      row.appendChild(btn);
+    } else {
+      const label = document.createElement('span');
+      label.className = 'rk-net-junction-label';
+      label.textContent = node.name + ' junction';
+      row.appendChild(label);
+    }
+    wrap.appendChild(row);
+    if(node.children){
+      const childWrap = document.createElement('div');
+      childWrap.className = 'rk-net-node';
+      node.children.forEach(c => childWrap.appendChild(buildNetNode(c)));
+      wrap.appendChild(childWrap);
+    }
+    return wrap;
+  }
+
+  function renderNetworkOverview(){
+    const container = document.createElement('div');
+    container.className = 'rk-net-tree';
+
+    const hub = document.createElement('div');
+    hub.className = 'rk-net-hub';
+    hub.textContent = 'ADELAIDE';
+    container.appendChild(hub);
+
+    const rootWrap = document.createElement('div');
+    rootWrap.className = 'rk-net-node';
+    NETWORK_TREE.forEach(n => rootWrap.appendChild(buildNetNode(n)));
+    container.appendChild(rootWrap);
+
+    const note = document.createElement('p');
+    note.style.cssText = 'margin-top:20px; font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--muted); line-height:1.6;';
+    note.textContent = 'Schematic only \u2014 not to scale, and not the official Adelaide Metro map. Click a line to open it.';
+    container.appendChild(note);
+
+    bodyEl.appendChild(container);
+  }
+
+  networkBtn.onclick = () => { showNetwork = !showNetwork; showTrackSpeeds = false; renderBody(); };
+  trackBtn.onclick = () => { showTrackSpeeds = !showTrackSpeeds; showNetwork = false; renderBody(); };
+
+  // Raw kilometrage data transcribed directly from the official Seaford Down/Up addenda screenshots.
+  // km: null means no kilometrage was given in the source document for that row.
+  const TRACK_SPEED_DATA = {
+    seaford_down: [
+      {km:0.000, label:'Adelaide', speed:15, comment:'No permanent speed sign at 0.000'},
+      {km:null, label:null, speed:35, comment:'At the end of the platform'},
+      {km:0.872, label:null, speed:60, comment:null},
+      {km:1.975, label:'Mile End', speed:null, comment:null},
+      {km:2.121, label:null, speed:110, comment:null},
+      {km:4.116, label:'Adelaide Showground', speed:null, comment:null},
+      {km:4.196, label:null, speed:80, comment:null},
+      {km:4.630, label:null, speed:60, comment:null},
+      {km:4.945, label:'Goodwood', speed:null, comment:null},
+      {km:5.714, label:null, speed:90, comment:null},
+      {km:6.308, label:'Clarence Park', speed:null, comment:null},
+      {km:7.138, label:'Emerson', speed:null, comment:null},
+      {km:7.178, label:null, speed:70, comment:null},
+      {km:7.850, label:'Edwardstown', speed:null, comment:null},
+      {km:8.091, label:null, speed:50, comment:null},
+      {km:8.235, label:null, speed:70, comment:null},
+      {km:8.364, label:null, speed:110, comment:null},
+      {km:9.115, label:'Woodlands Park', speed:null, comment:null},
+      {km:10.094, label:null, speed:90, comment:null},
+      {km:10.176, label:'Ascot Park', speed:null, comment:null},
+      {km:11.240, label:null, speed:110, comment:null},
+      {km:11.380, label:'Marion', speed:null, comment:null},
+      {km:12.392, label:null, speed:90, comment:null},
+      {km:12.861, label:null, speed:60, comment:null},
+      {km:12.944, label:'Oaklands', speed:null, comment:null},
+      {km:13.455, label:null, speed:100, comment:null},
+      {km:13.703, label:'Warradale', speed:null, comment:null},
+      {km:14.589, label:null, speed:55, comment:null},
+      {km:14.613, label:'Hove', speed:null, comment:null},
+      {km:15.840, label:'Brighton', speed:null, comment:null},
+      {km:16.279, label:null, speed:80, comment:null},
+      {km:16.920, label:'Seacliff Up', speed:null, comment:null},
+      {km:17.105, label:'Seacliff Down', speed:null, comment:null},
+      {km:18.039, label:null, speed:100, comment:null},
+      {km:18.292, label:'Marino', speed:null, comment:null},
+      {km:18.915, label:'Marino Rocks', speed:null, comment:null},
+      {km:21.391, label:'Hallett Cove', speed:null, comment:null},
+      {km:22.972, label:'Hallett Cove Beach', speed:null, comment:null},
+      {km:23.293, label:null, speed:85, comment:null},
+      {km:23.633, label:null, speed:100, comment:null},
+      {km:25.248, label:null, speed:70, comment:null},
+      {km:26.068, label:null, speed:100, comment:null},
+      {km:26.345, label:null, speed:110, comment:null},
+      {km:26.648, label:'Lonsdale', speed:null, comment:null},
+      {km:28.704, label:null, speed:85, comment:null},
+      {km:28.900, label:'Christie Downs', speed:null, comment:null},
+      {km:29.030, label:null, speed:110, comment:null},
+      {km:29.980, label:null, speed:70, comment:null},
+      {km:30.208, label:'Noarlunga Centre', speed:null, comment:null},
+      {km:30.350, label:null, speed:110, comment:null},
+      {km:34.483, label:null, speed:100, comment:null},
+      {km:34.562, label:'Seaford Meadows', speed:null, comment:null},
+      {km:35.453, label:null, speed:70, comment:null},
+      {km:35.667, label:null, speed:25, comment:null},
+      {km:35.784, label:'Seaford', speed:null, comment:null},
+      {km:35.943, label:'End of Seaford Line', speed:null, comment:null},
+    ],
+    seaford_up: [
+      {km:35.943, label:'End of Seaford Line', speed:null, comment:null},
+      {km:35.784, label:'Seaford', speed:null, comment:null},
+      {km:35.784, label:null, speed:70, comment:null},
+      {km:35.453, label:null, speed:100, comment:null},
+      {km:34.562, label:'Seaford Meadows', speed:null, comment:null},
+      {km:34.483, label:null, speed:110, comment:null},
+      {km:30.350, label:null, speed:70, comment:null},
+      {km:30.208, label:'Noarlunga Centre', speed:null, comment:null},
+      {km:28.900, label:'Christie Downs', speed:null, comment:null},
+      {km:28.826, label:null, speed:110, comment:null},
+      {km:26.648, label:'Lonsdale', speed:null, comment:null},
+      {km:26.314, label:null, speed:100, comment:null},
+      {km:23.656, label:null, speed:85, comment:null},
+      {km:23.323, label:null, speed:100, comment:null},
+      {km:22.972, label:'Hallett Cove Beach', speed:null, comment:null},
+      {km:21.391, label:'Hallett Cove', speed:null, comment:null},
+      {km:19.053, label:null, speed:70, comment:null},
+      {km:18.915, label:'Marino Rocks', speed:null, comment:null},
+      {km:18.815, label:null, speed:80, comment:null},
+      {km:18.292, label:'Marino', speed:null, comment:null},
+      {km:17.651, label:null, speed:110, comment:null},
+      {km:17.105, label:'Seacliff Down', speed:null, comment:null},
+      {km:16.920, label:'Seacliff Up', speed:null, comment:null},
+      {km:16.604, label:null, speed:60, comment:null},
+      {km:15.840, label:'Brighton', speed:null, comment:null},
+      {km:15.405, label:null, speed:45, comment:null},
+      {km:14.613, label:'Hove', speed:null, comment:null},
+      {km:14.530, label:null, speed:100, comment:null},
+      {km:13.703, label:'Warradale', speed:null, comment:null},
+      {km:13.424, label:null, speed:60, comment:null},
+      {km:12.944, label:'Oaklands', speed:null, comment:null},
+      {km:12.862, label:null, speed:90, comment:null},
+      {km:12.394, label:null, speed:110, comment:null},
+      {km:11.380, label:'Marion', speed:null, comment:null},
+      {km:11.291, label:null, speed:90, comment:null},
+      {km:10.176, label:'Ascot Park', speed:null, comment:null},
+      {km:9.980, label:null, speed:80, comment:null},
+      {km:9.115, label:'Woodlands Park', speed:null, comment:null},
+      {km:8.364, label:null, speed:40, comment:null},
+      {km:8.047, label:null, speed:75, comment:null},
+      {km:7.850, label:'Edwardstown', speed:null, comment:null},
+      {km:7.130, label:'Emerson', speed:null, comment:null},
+      {km:6.973, label:null, speed:90, comment:null},
+      {km:6.308, label:'Clarence Park', speed:null, comment:null},
+      {km:5.708, label:null, speed:60, comment:null},
+      {km:4.945, label:'Goodwood', speed:null, comment:null},
+      {km:4.630, label:null, speed:80, comment:null},
+      {km:4.116, label:'Adelaide Showground', speed:null, comment:null},
+      {km:4.036, label:null, speed:110, comment:null},
+      {km:1.975, label:'Mile End', speed:null, comment:null},
+      {km:1.922, label:null, speed:80, comment:null},
+      {km:1.160, label:null, speed:60, comment:null},
+      {km:0.872, label:null, speed:35, comment:null},
+      {km:0.000, label:'Adelaide', speed:15, comment:'Into Platform'},
+      {km:null, label:null, speed:5, comment:'Prior to buffer'},
+    ],
+    belair_down: [
+      {km:0, label:'Adelaide Station', speed:15, comment:'No permanent speed sign at 0.000'},
+      {km:null, label:null, speed:35, comment:'Once past end of the platform'},
+      {km:0.872, label:null, speed:55, comment:null},
+      {km:1.13, label:null, speed:85, comment:null},
+      {km:1.975, label:'Mile End', speed:null, comment:null},
+      {km:2.078, label:null, speed:110, comment:null},
+      {km:3, label:null, speed:90, comment:null},
+      {km:3.972, label:null, speed:35, comment:null},
+      {km:4.034, label:null, speed:60, comment:null},
+      {km:4.116, label:'Adelaide Showground', speed:null, comment:null},
+      {km:4.945, label:'Goodwood', speed:null, comment:null},
+      {km:5.137, label:'Millswood Loop', speed:null, comment:null},
+      {km:5.74, label:null, speed:90, comment:null},
+      {km:5.953, label:'Millswood', speed:null, comment:null},
+      {km:6.967, label:'Unley Park', speed:null, comment:null},
+      {km:8.533, label:'Mitcham', speed:null, comment:null},
+      {km:8.635, label:null, speed:55, comment:null},
+      {km:8.86, label:null, speed:90, comment:null},
+      {km:9.3, label:'Torrens Park', speed:null, comment:null},
+      {km:10.71, label:'Lynton', speed:null, comment:null},
+      {km:11.157, label:null, speed:65, comment:null},
+      {km:11.299, label:'Sleeps Hill Loop', speed:null, comment:null},
+      {km:11.765, label:null, speed:55, comment:null},
+      {km:12.051, label:null, speed:90, comment:null},
+      {km:12.072, label:'Sleeps Hill Tunnel Adelaide End', speed:null, comment:null},
+      {km:12.805, label:'Sleeps Hill Tunnel Belair End', speed:null, comment:null},
+      {km:12.825, label:null, speed:50, comment:null},
+      {km:13.483, label:null, speed:40, comment:null},
+      {km:14.158, label:'Eden Hills', speed:null, comment:null},
+      {km:14.303, label:null, speed:50, comment:null},
+      {km:14.9, label:'Shepherds Hill Tunnel Adelaide End', speed:null, comment:null},
+      {km:15.037, label:'Shepherds Hill Tunnel Belair End', speed:null, comment:null},
+      {km:15.053, label:'Eden Hills Loop', speed:null, comment:null},
+      {km:15.281, label:null, speed:40, comment:null},
+      {km:15.686, label:null, speed:50, comment:null},
+      {km:17.241, label:'Coromandel', speed:null, comment:null},
+      {km:17.5, label:null, speed:40, comment:'Signal Sighting'},
+      {km:17.74, label:null, speed:35, comment:null},
+      {km:18.111, label:'Blackwood', speed:null, comment:null},
+      {km:18.259, label:null, speed:45, comment:null},
+      {km:18.453, label:null, speed:55, comment:null},
+      {km:19.319, label:'Glenalta', speed:null, comment:null},
+      {km:20.168, label:null, speed:40, comment:null},
+      {km:20.56, label:'Pinera', speed:null, comment:null},
+      {km:21.27, label:null, speed:35, comment:null},
+      {km:21.51, label:'Belair', speed:null, comment:null},
+      {km:21.748, label:'End of Belair Line', speed:null, comment:null},
+    ],
+    belair_up: [
+      {km:21.748, label:'End of Belair Line', speed:null, comment:null},
+      {km:21.51, label:'Belair', speed:null, comment:null},
+      {km:21.39, label:null, speed:35, comment:null},
+      {km:21.27, label:null, speed:40, comment:null},
+      {km:20.56, label:'Pinera', speed:null, comment:null},
+      {km:20.168, label:null, speed:55, comment:null},
+      {km:19.319, label:'Glenalta', speed:null, comment:null},
+      {km:18.453, label:null, speed:45, comment:null},
+      {km:18.259, label:null, speed:35, comment:null},
+      {km:18.111, label:'Blackwood', speed:null, comment:null},
+      {km:17.74, label:null, speed:50, comment:null},
+      {km:17.241, label:'Coromandel', speed:null, comment:null},
+      {km:15.686, label:null, speed:40, comment:null},
+      {km:15.281, label:null, speed:50, comment:null},
+      {km:15.266, label:'Eden Hills Loop', speed:null, comment:null},
+      {km:15.037, label:'Shepherds Hill Tunnel Belair End', speed:null, comment:null},
+      {km:14.9, label:'Shepherds Hill Tunnel Adelaide End', speed:null, comment:null},
+      {km:14.303, label:null, speed:40, comment:null},
+      {km:14.158, label:'Eden Hills', speed:null, comment:null},
+      {km:13.483, label:null, speed:50, comment:null},
+      {km:12.825, label:null, speed:90, comment:null},
+      {km:12.805, label:'Sleeps Hill Tunnel Belair End', speed:null, comment:null},
+      {km:12.072, label:'Sleeps Hill Tunnel Adelaide End', speed:null, comment:null},
+      {km:12.051, label:null, speed:55, comment:null},
+      {km:11.577, label:'Sleeps Hill Loop', speed:null, comment:null},
+      {km:11.765, label:null, speed:65, comment:null},
+      {km:11.157, label:null, speed:90, comment:null},
+      {km:10.71, label:'Lynton', speed:null, comment:null},
+      {km:9.3, label:'Torrens Park', speed:null, comment:null},
+      {km:8.86, label:null, speed:55, comment:null},
+      {km:8.635, label:null, speed:90, comment:null},
+      {km:8.533, label:'Mitcham', speed:null, comment:null},
+      {km:6.967, label:'Unley Park', speed:null, comment:null},
+      {km:5.953, label:'Millswood', speed:null, comment:null},
+      {km:5.74, label:null, speed:60, comment:null},
+      {km:5.617, label:'Millswood Loop', speed:null, comment:null},
+      {km:4.945, label:'Goodwood', speed:null, comment:null},
+      {km:4.63, label:null, speed:80, comment:null},
+      {km:4.116, label:'Adelaide Showground', speed:null, comment:null},
+      {km:3.731, label:null, speed:110, comment:null},
+      {km:1.975, label:'Mile End', speed:null, comment:null},
+      {km:1.922, label:null, speed:85, comment:null},
+      {km:1.132, label:null, speed:55, comment:null},
+      {km:0.872, label:null, speed:35, comment:null},
+      {km:0, label:'Adelaide Station', speed:15, comment:'Into Platform'},
+      {km:null, label:null, speed:5, comment:'Just prior to buffer'},
+    ],
+    outerharbor_down: [
+      {km:0, label:'Adelaide', speed:15, comment:'No permanent speed sign at 0.000'},
+      {km:null, label:null, speed:35, comment:'Once past end of the platform'},
+      {km:0.633, label:null, speed:70, comment:null},
+      {km:1.515, label:null, speed:90, comment:null},
+      {km:2.5, label:'Bowden', speed:null, comment:null},
+      {km:4.19, label:'Croydon', speed:null, comment:null},
+      {km:5.054, label:'West Croydon', speed:null, comment:null},
+      {km:5.965, label:'Kilkenny', speed:null, comment:null},
+      {km:6.05, label:null, speed:80, comment:null},
+      {km:6.774, label:'Woodville Park', speed:null, comment:null},
+      {km:7.307, label:null, speed:90, comment:null},
+      {km:7.465, label:'Woodville', speed:null, comment:null},
+      {km:8.485, label:'St Clair', speed:null, comment:null},
+      {km:9.168, label:'Cheltenham', speed:null, comment:null},
+      {km:10.14, label:null, speed:40, comment:'Non-conforming track centres through Alberton Station'},
+      {km:10.21, label:'Alberton', speed:null, comment:null},
+      {km:10.28, label:null, speed:90, comment:null},
+      {km:10.79, label:null, speed:80, comment:null},
+      {km:11.023, label:null, speed:70, comment:null},
+      {km:11.189, label:null, speed:40, comment:null},
+      {km:11.676, label:'Port Adelaide', speed:null, comment:null},
+      {km:11.972, label:null, speed:90, comment:null},
+      {km:12.48, label:null, speed:40, comment:null},
+      {km:13.076, label:'Ethelton', speed:null, comment:null},
+      {km:13.132, label:null, speed:50, comment:null},
+      {km:13.767, label:'Glanville', speed:null, comment:null},
+      {km:13.97, label:null, speed:65, comment:null},
+      {km:14.632, label:'Peterhead', speed:null, comment:null},
+      {km:15.474, label:'Largs', speed:null, comment:null},
+      {km:16.387, label:'Largs North', speed:null, comment:null},
+      {km:17.166, label:'Draper', speed:null, comment:null},
+      {km:17.324, label:null, speed:80, comment:null},
+      {km:17.96, label:null, speed:65, comment:null},
+      {km:18.139, label:'Taperoo', speed:null, comment:null},
+      {km:18.302, label:null, speed:80, comment:null},
+      {km:18.81, label:'Midlunga', speed:null, comment:null},
+      {km:19.55, label:'Osborne', speed:null, comment:null},
+      {km:19.616, label:null, speed:65, comment:null},
+      {km:20.46, label:'North Haven', speed:null, comment:null},
+      {km:20.796, label:null, speed:50, comment:null},
+      {km:21.926, label:'Outer Harbor', speed:null, comment:null},
+      {km:21.975, label:'End of Outer Harbor Line', speed:null, comment:null},
+    ],
+    outerharbor_up: [
+      {km:21.975, label:'End of Outer Harbor Line', speed:null, comment:null},
+      {km:21.926, label:'Outer Harbor', speed:null, comment:null},
+      {km:21.926, label:null, speed:50, comment:null},
+      {km:20.796, label:null, speed:65, comment:null},
+      {km:20.46, label:'North Haven', speed:null, comment:null},
+      {km:19.616, label:null, speed:80, comment:null},
+      {km:19.55, label:'Osborne', speed:null, comment:null},
+      {km:18.81, label:'Midlunga', speed:null, comment:null},
+      {km:18.302, label:null, speed:65, comment:null},
+      {km:18.139, label:'Taperoo', speed:null, comment:null},
+      {km:17.96, label:null, speed:80, comment:null},
+      {km:17.324, label:null, speed:65, comment:null},
+      {km:17.166, label:'Draper', speed:null, comment:null},
+      {km:16.387, label:'Largs North', speed:null, comment:null},
+      {km:15.474, label:'Largs', speed:null, comment:null},
+      {km:14.632, label:'Peterhead', speed:null, comment:null},
+      {km:13.769, label:'Glanville', speed:null, comment:null},
+      {km:13.643, label:null, speed:35, comment:null},
+      {km:13.544, label:null, speed:50, comment:null},
+      {km:13.132, label:null, speed:40, comment:null},
+      {km:13.076, label:'Ethelton', speed:null, comment:null},
+      {km:12.478, label:null, speed:90, comment:null},
+      {km:11.972, label:null, speed:40, comment:null},
+      {km:11.676, label:'Port Adelaide', speed:null, comment:null},
+      {km:11.146, label:null, speed:70, comment:null},
+      {km:11.023, label:null, speed:80, comment:null},
+      {km:10.804, label:null, speed:90, comment:null},
+      {km:10.28, label:null, speed:40, comment:'Non-conforming track centres through Alberton Station'},
+      {km:10.21, label:'Alberton', speed:null, comment:null},
+      {km:10.14, label:null, speed:90, comment:null},
+      {km:9.168, label:'Cheltenham', speed:null, comment:null},
+      {km:8.485, label:'St Clair', speed:null, comment:null},
+      {km:7.456, label:'Woodville', speed:null, comment:null},
+      {km:7.347, label:null, speed:70, comment:null},
+      {km:6.774, label:'Woodville Park', speed:null, comment:null},
+      {km:5.965, label:'Kilkenny', speed:null, comment:null},
+      {km:5.788, label:null, speed:90, comment:null},
+      {km:5.054, label:'West Croydon', speed:null, comment:null},
+      {km:4.19, label:'Croydon', speed:null, comment:null},
+      {km:2.5, label:'Bowden', speed:null, comment:null},
+      {km:1.515, label:null, speed:70, comment:null},
+      {km:0.633, label:null, speed:35, comment:null},
+      {km:0, label:'Adelaide', speed:15, comment:'Into Platform'},
+      {km:null, label:null, speed:5, comment:'Prior to buffer stop'},
+    ],
+    gawler_down: [
+      {km:0, label:'Adelaide Station', speed:15, comment:'No permanent speed sign at 0.000'},
+      {km:null, label:null, speed:35, comment:'At the end of the platform'},
+      {km:0.633, label:null, speed:70, comment:null},
+      {km:1.515, label:null, speed:75, comment:null},
+      {km:2.4, label:null, speed:110, comment:null},
+      {km:2.497, label:'North Adelaide', speed:null, comment:null},
+      {km:3.461, label:null, speed:80, comment:null},
+      {km:3.65, label:'Ovingham', speed:null, comment:null},
+      {km:4.07, label:null, speed:110, comment:null},
+      {km:4.899, label:'Dudley Park', speed:null, comment:null},
+      {km:5.52, label:null, speed:80, comment:null},
+      {km:6.008, label:'Islington', speed:null, comment:null},
+      {km:6.083, label:null, speed:110, comment:null},
+      {km:7.659, label:null, speed:70, comment:null},
+      {km:7.69, label:null, speed:85, comment:null},
+      {km:7.744, label:null, speed:105, comment:null},
+      {km:7.807, label:'Kilburn', speed:null, comment:null},
+      {km:8.615, label:null, speed:110, comment:null},
+      {km:10.529, label:null, speed:100, comment:null},
+      {km:10.613, label:'Dry Creek', speed:null, comment:null},
+      {km:10.83, label:null, speed:110, comment:null},
+      {km:14.846, label:'Mawson Lakes', speed:null, comment:null},
+      {km:15.573, label:'Greenfields', speed:null, comment:null},
+      {km:16.567, label:'Parafield Gardens', speed:null, comment:null},
+      {km:17.704, label:'Parafield', speed:null, comment:null},
+      {km:19.919, label:'Chidda', speed:null, comment:null},
+      {km:19.919, label:null, speed:70, comment:null},
+      {km:20.238, label:'Salisbury', speed:null, comment:null},
+      {km:20.74, label:'Salisbury Siding', speed:null, comment:'15 km/h into Salisbury Siding'},
+      {km:21.251, label:null, speed:110, comment:null},
+      {km:21.779, label:'Nurlutta', speed:null, comment:null},
+      {km:24.032, label:'Elizabeth South', speed:null, comment:null},
+      {km:25.716, label:'Elizabeth', speed:null, comment:null},
+      {km:26.001, label:'Elizabeth Siding', speed:null, comment:null},
+      {km:27.169, label:null, speed:85, comment:null},
+      {km:27.3, label:'Womma', speed:null, comment:null},
+      {km:27.515, label:null, speed:110, comment:null},
+      {km:28.324, label:'Broadmeadows', speed:null, comment:null},
+      {km:30.223, label:'Smithfield', speed:null, comment:null},
+      {km:30.254, label:null, speed:100, comment:null},
+      {km:31.047, label:null, speed:110, comment:null},
+      {km:32.02, label:'Munno Para', speed:null, comment:null},
+      {km:34.099, label:'Kudla', speed:null, comment:null},
+      {km:37.226, label:'Tamblin', speed:null, comment:null},
+      {km:38.27, label:'Evanston', speed:null, comment:null},
+      {km:38.848, label:null, speed:50, comment:null},
+      {km:39.315, label:'Gawler Racecourse', speed:null, comment:null},
+      {km:39.789, label:'Gawler Platform 1 & 2', speed:30, comment:'Only through Platforms 1 & 2'},
+      {km:39.847, label:'Gawler Platform 3', speed:null, comment:null},
+      {km:39.85, label:null, speed:20, comment:null},
+      {km:39.94, label:null, speed:50, comment:null},
+      {km:41.43, label:'Gawler Oval', speed:null, comment:null},
+      {km:42.154, label:'Gawler Central', speed:null, comment:null},
+      {km:42.183, label:'End of Gawler Line', speed:null, comment:'Buffer placed prior to Murray St'},
+    ],
+    gawler_up: [
+      {km:42.183, label:'End of Gawler Line', speed:25, comment:'Reduced functionality ATP signal 4272'},
+      {km:41.997, label:'Gawler Central', speed:null, comment:null},
+      {km:41.43, label:'Gawler Oval', speed:null, comment:null},
+      {km:39.94, label:null, speed:20, comment:'This speed is also posted for down movements as well as the back road'},
+      {km:39.847, label:'Gawler Platform 3', speed:null, comment:null},
+      {km:39.789, label:'Gawler Platform 1 & 2', speed:50, comment:'Only through Platforms 1 & 2'},
+      {km:39.62, label:null, speed:50, comment:null},
+      {km:39.315, label:'Gawler Racecourse', speed:null, comment:null},
+      {km:39.032, label:null, speed:100, comment:null},
+      {km:38.27, label:'Evanston', speed:null, comment:null},
+      {km:38.176, label:null, speed:110, comment:null},
+      {km:37.226, label:'Tamblin', speed:null, comment:null},
+      {km:34.099, label:'Kudla', speed:null, comment:null},
+      {km:33.927, label:null, speed:105, comment:null},
+      {km:33.713, label:null, speed:110, comment:null},
+      {km:32.02, label:'Munno Para', speed:null, comment:null},
+      {km:30.223, label:'Smithfield', speed:null, comment:null},
+      {km:28.324, label:'Broadmeadows', speed:null, comment:null},
+      {km:28.119, label:null, speed:100, comment:null},
+      {km:27.3, label:'Womma', speed:null, comment:null},
+      {km:27.186, label:null, speed:110, comment:null},
+      {km:26.402, label:'Elizabeth Siding', speed:null, comment:null},
+      {km:25.716, label:'Elizabeth', speed:null, comment:null},
+      {km:24.032, label:'Elizabeth South', speed:null, comment:null},
+      {km:21.527, label:'Nurlutta', speed:null, comment:null},
+      {km:20.726, label:null, speed:70, comment:null},
+      {km:20.238, label:'Salisbury', speed:null, comment:null},
+      {km:19.915, label:null, speed:110, comment:null},
+      {km:18.85, label:'Chidda', speed:null, comment:null},
+      {km:17.704, label:'Parafield', speed:null, comment:null},
+      {km:16.567, label:'Parafield Gardens', speed:null, comment:null},
+      {km:15.573, label:'Greenfields', speed:null, comment:null},
+      {km:14.846, label:'Mawson Lakes', speed:null, comment:null},
+      {km:10.613, label:'Dry Creek', speed:null, comment:null},
+      {km:9.97, label:null, speed:100, comment:null},
+      {km:9.493, label:null, speed:110, comment:null},
+      {km:8.614, label:null, speed:90, comment:null},
+      {km:7.678, label:'Kilburn', speed:null, comment:null},
+      {km:7.597, label:null, speed:110, comment:null},
+      {km:6.063, label:null, speed:80, comment:null},
+      {km:6.008, label:'Islington', speed:null, comment:null},
+      {km:5.52, label:null, speed:110, comment:null},
+      {km:4.899, label:'Dudley Park', speed:null, comment:null},
+      {km:4.07, label:null, speed:80, comment:null},
+      {km:3.65, label:'Ovingham', speed:null, comment:null},
+      {km:3.461, label:null, speed:110, comment:null},
+      {km:2.497, label:'North Adelaide', speed:null, comment:null},
+      {km:2.384, label:null, speed:75, comment:null},
+      {km:1.515, label:null, speed:70, comment:null},
+      {km:0.633, label:'Adelaide Yard', speed:35, comment:null},
+      {km:0, label:'Adelaide Station', speed:15, comment:'Into Platform'},
+      {km:null, label:null, speed:5, comment:'Before buffer'},
+    ],
+  };
+
+  // Flinders branches off the Seaford mainline between Woodlands Park and Ascot Park.
+  // The Flinders addenda only documents kilometrage from that junction outward, on the
+  // same absolute Adelaide-based km scale as Seaford. So the full Down/Up picture is
+  // built by splicing Seaford's trunk portion together with Flinders' own branch data.
+  const FLINDERS_OWN_DOWN = [
+    {km:9.996, label:'Points TJ1', speed:null, comment:null},
+    {km:10.011, label:'Points TJ2', speed:null, comment:null},
+    {km:10.039, label:null, speed:40, comment:null},
+    {km:10.278, label:null, speed:90, comment:null},
+    {km:11.180, label:null, speed:70, comment:null},
+    {km:11.442, label:'Mitchell Park', speed:null, comment:null},
+    {km:11.610, label:null, speed:80, comment:null},
+    {km:12.182, label:null, speed:70, comment:null},
+    {km:12.240, label:'Tonsley', speed:null, comment:null},
+    {km:12.925, label:null, speed:50, comment:null},
+    {km:13.583, label:null, speed:15, comment:null},
+    {km:13.590, label:'Flinders', speed:null, comment:null},
+    {km:13.755, label:'Buffer Stop', speed:null, comment:null},
+    {km:13.770, label:'End of Flinders Line', speed:null, comment:null},
+  ];
+  const FLINDERS_OWN_UP = [
+    {km:13.770, label:'End of Flinders Line', speed:null, comment:null},
+    {km:13.755, label:'Buffer Stop', speed:null, comment:null},
+    {km:13.590, label:'Flinders', speed:null, comment:null},
+    {km:13.583, label:null, speed:50, comment:null},
+    {km:12.925, label:null, speed:70, comment:null},
+    {km:12.240, label:'Tonsley', speed:null, comment:null},
+    {km:12.182, label:null, speed:80, comment:null},
+    {km:11.610, label:null, speed:45, comment:null},
+    {km:11.566, label:'Mitchell Park', speed:null, comment:null},
+    {km:11.180, label:null, speed:35, comment:'No board placed due to turnout'},
+    {km:11.066, label:null, speed:90, comment:null},
+    {km:10.278, label:null, speed:35, comment:'No board placed due to turnout'},
+  ];
+
+  (function buildFlindersTrackSpeeds(){
+    const trunkDown = TRACK_SPEED_DATA.seaford_down;
+    const wpIdx = trunkDown.findIndex(r => r.label === 'Woodlands Park');
+    const trunkDownPortion = wpIdx >= 0 ? trunkDown.slice(0, wpIdx + 1) : [];
+    TRACK_SPEED_DATA.tonsley_down = trunkDownPortion.concat(FLINDERS_OWN_DOWN);
+
+    const trunkUp = TRACK_SPEED_DATA.seaford_up;
+    const rejoinIdx = trunkUp.findIndex(r => r.km === 9.980 && r.speed === 80);
+    const trunkUpPortion = rejoinIdx >= 0 ? trunkUp.slice(rejoinIdx) : [];
+    TRACK_SPEED_DATA.tonsley_up = FLINDERS_OWN_UP.concat(trunkUpPortion);
+  })();
+
+  // Grange branches off Outer Harbor at Woodville; Port Dock branches off Outer Harbor
+  // just past Alberton. Both addenda only document kilometrage from their own junction
+  // outward, on the same absolute Adelaide-based km scale as Outer Harbor, so both are
+  // built by splicing Outer Harbor's trunk portion together with each branch's own data.
+  const GRANGE_OWN_DOWN = [
+    {km:7.252, label:'Point WV1', speed:null, comment:null},
+    {km:7.324, label:'Point WV2', speed:null, comment:null},
+    {km:7.325, label:null, speed:35, comment:'No speed board at 7.325'},
+    {km:7.481, label:'Woodville', speed:null, comment:null},
+    {km:7.494, label:null, speed:35, comment:'Additional 35km/h speed board at 7.494'},
+    {km:8.235, label:null, speed:40, comment:null},
+    {km:8.326, label:null, speed:80, comment:null},
+    {km:9.080, label:'Albert Park', speed:null, comment:null},
+    {km:10.311, label:'Seaton Park', speed:null, comment:null},
+    {km:10.559, label:null, speed:55, comment:null},
+    {km:11.679, label:null, speed:80, comment:null},
+    {km:11.969, label:'East Grange', speed:null, comment:null},
+    {km:12.759, label:null, speed:10, comment:'10 km/h until buffer'},
+    {km:12.962, label:'Grange', speed:null, comment:null},
+    {km:13.007, label:'End of Grange Line', speed:null, comment:null},
+  ];
+  const GRANGE_OWN_UP = [
+    {km:13.007, label:'End of Line', speed:null, comment:null},
+    {km:13.000, label:null, speed:25, comment:'No speed board at 13.000. Additional 25km/h speed board at 12.880'},
+    {km:12.962, label:'Grange', speed:null, comment:null},
+    {km:12.840, label:null, speed:10, comment:null},
+    {km:12.759, label:null, speed:80, comment:null},
+    {km:11.969, label:'East Grange', speed:null, comment:null},
+    {km:11.679, label:null, speed:55, comment:null},
+    {km:10.559, label:null, speed:80, comment:null},
+    {km:10.311, label:'Seaton Park', speed:null, comment:null},
+    {km:9.080, label:'Albert Park', speed:null, comment:null},
+    {km:8.705, label:null, speed:50, comment:null},
+    {km:8.326, label:null, speed:40, comment:null},
+    {km:7.481, label:'Woodville', speed:null, comment:null},
+  ];
+  const PORTDOCK_OWN_DOWN = [
+    {km:10.712, label:'Point PA1A', speed:35, comment:null},
+    {km:10.780, label:'Point PA1/Point PA2', speed:null, comment:null},
+    {km:11.268, label:'Port Dock Loop', speed:null, comment:null},
+    {km:11.834, label:'Port Dock', speed:null, comment:null},
+    {km:null, label:null, speed:15, comment:'Arriving into Port Dock Platform'},
+    {km:11.968, label:'End of Line', speed:null, comment:null},
+  ];
+  const PORTDOCK_OWN_UP = [
+    {km:11.968, label:'End of Line', speed:null, comment:null},
+    {km:11.834, label:'Port Dock', speed:35, comment:'Departing from Port Dock Platform'},
+    {km:11.268, label:'Port Dock Loop', speed:null, comment:null},
+    {km:10.780, label:'Point PA2/Point PA1A', speed:null, comment:null},
+  ];
+
+  (function buildGrangeAndPortDockTrackSpeeds(){
+    const ohDown = TRACK_SPEED_DATA.outerharbor_down;
+    const ohUp = TRACK_SPEED_DATA.outerharbor_up;
+
+    const wpDownIdx = ohDown.findIndex(r => r.label === 'Woodville Park');
+    TRACK_SPEED_DATA.grange_down = (wpDownIdx >= 0 ? ohDown.slice(0, wpDownIdx + 1) : []).concat(GRANGE_OWN_DOWN);
+
+    const wpUpIdx = ohUp.findIndex(r => r.label === 'Woodville Park');
+    TRACK_SPEED_DATA.grange_up = GRANGE_OWN_UP.concat(wpUpIdx >= 0 ? ohUp.slice(wpUpIdx) : []);
+
+    const pdDownIdx = ohDown.findIndex(r => r.km === 10.280 && r.speed === 90);
+    TRACK_SPEED_DATA.portdock_down = (pdDownIdx >= 0 ? ohDown.slice(0, pdDownIdx + 1) : []).concat(PORTDOCK_OWN_DOWN);
+
+    const pdUpIdx = ohUp.findIndex(r => r.km === 10.280 && r.speed === 40);
+    TRACK_SPEED_DATA.portdock_up = PORTDOCK_OWN_UP.concat(pdUpIdx >= 0 ? ohUp.slice(pdUpIdx) : []);
+  })();
+
+  const TRACK_SPEED_TABS = [
+    { id:'seaford_down', label:'Seaford Down' },
+    { id:'seaford_up', label:'Seaford Up' },
+    { id:'tonsley_down', label:'Flinders Down' },
+    { id:'tonsley_up', label:'Flinders Up' },
+    { id:'belair_down', label:'Belair Down' },
+    { id:'belair_up', label:'Belair Up' },
+    { id:'outerharbor_down', label:'Outer Harbor Down' },
+    { id:'outerharbor_up', label:'Outer Harbor Up' },
+    { id:'grange_down', label:'Grange Down' },
+    { id:'grange_up', label:'Grange Up' },
+    { id:'portdock_down', label:'Port Dock Down' },
+    { id:'portdock_up', label:'Port Dock Up' },
+    { id:'gawler_down', label:'Gawler Down' },
+    { id:'gawler_up', label:'Gawler Up' },
+  ];
+
+  function renderTrackSpeeds(){
+    const wrap = document.createElement('div');
+    wrap.className = 'rk-ts-list';
+
+    const toggle = document.createElement('div');
+    toggle.className = 'rk-ts-toggle';
+    toggle.style.flexWrap = 'wrap';
+    TRACK_SPEED_TABS.forEach(tab => {
+      const b = document.createElement('button');
+      b.className = 'rk-btn' + (trackSpeedsDir === tab.id ? ' quiz-active' : '');
+      b.textContent = tab.label;
+      b.onclick = () => { trackSpeedsDir = tab.id; renderBody(); };
+      toggle.appendChild(b);
+    });
+    wrap.appendChild(toggle);
+
+    const rows = TRACK_SPEED_DATA[trackSpeedsDir];
+    rows.forEach((row, i) => {
+      if(row.label){
+        const stationEl = document.createElement('div');
+        stationEl.className = 'rk-ts-station';
+        stationEl.textContent = row.label;
+        wrap.appendChild(stationEl);
+      }
+      if(row.speed !== null){
+        let endRow = null;
+        for(let j = i + 1; j < rows.length; j++){
+          if(rows[j].speed !== null){ endRow = rows[j]; break; }
+        }
+        if(!endRow){
+          const lastRow = rows[rows.length - 1];
+          if(lastRow && lastRow !== row && lastRow.km !== null) endRow = lastRow;
+        }
+        let distText;
+        if(row.km === null){
+          distText = 'exact km not given in source';
+        } else if(endRow && endRow.km !== null){
+          distText = 'for ' + Math.abs(endRow.km - row.km).toFixed(3) + ' km';
+        } else {
+          distText = 'distance not given in source';
+        }
+        const rowEl = document.createElement('div');
+        rowEl.className = 'rk-ts-row';
+        const speedEl = document.createElement('span');
+        speedEl.className = 'rk-ts-speed';
+        speedEl.textContent = row.speed + ' km/h';
+        rowEl.appendChild(speedEl);
+        const distEl = document.createElement('span');
+        distEl.className = 'rk-ts-dist';
+        distEl.textContent = distText + (row.km !== null ? ' (from km ' + row.km.toFixed(3) + ')' : '');
+        rowEl.appendChild(distEl);
+        if(row.comment){
+          const commentEl = document.createElement('span');
+          commentEl.className = 'rk-ts-comment';
+          commentEl.textContent = row.comment;
+          rowEl.appendChild(commentEl);
+        }
+        wrap.appendChild(rowEl);
+      }
+    });
+
+    const note = document.createElement('p');
+    note.style.cssText = 'margin-top:18px; font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--muted); line-height:1.6;';
+    note.textContent = 'Purely informational \u2014 transcribed from the official addenda kilometrage tables. Seaford only, since that\u2019s the only line with kilometrage loaded.';
+    wrap.appendChild(note);
+
+    bodyEl.appendChild(wrap);
+  }
+
+  // Works inside Claude artifacts (window.storage) AND as a standalone hosted page
+  // (falls back to the browser's localStorage). Same file, either environment.
+  const hasClaudeStorage = typeof window !== 'undefined' && !!window.storage;
+  const storageAdapter = hasClaudeStorage ? window.storage : {
+    async get(key){
+      const v = localStorage.getItem('rk:' + key);
+      if(v === null) return null;
+      return { key, value: v, shared: false };
+    },
+    async set(key, value){
+      localStorage.setItem('rk:' + key, value);
+      return { key, value, shared: false };
+    },
+    async delete(key){
+      localStorage.removeItem('rk:' + key);
+      return { key, deleted: true, shared: false };
+    },
+  };
+
+  function storageKey(lineId){ return 'segments:' + lineId; }
+
+  function parseSegmentLines(text){
+    return text.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+      const parts = l.split(',').map(p => p.trim());
+      if(parts.length >= 3 && parts[0] && parts[1] && parts[2] !== ''){
+        return {
+          id: 'seg_' + Date.now() + '_' + Math.floor(Math.random()*1000000),
+          from: parts[0],
+          to: parts[1],
+          speed: parts[2],
+          note: parts[3] || undefined,
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  }
+
+  const SEED_DATA = {
+    seaford_down: [
+      'Adelaide, Adelaide (2), 15',
+      'Adelaide (2), Adelaide (3), 35',
+      'Adelaide (3), Mile End, 60',
+      'Mile End, Showgrounds, 110',
+      'Showgrounds, Showgrounds (2), 80',
+      'Showgrounds (2), Goodwood, 60',
+      'Goodwood, Clarence Park, 90',
+      'Clarence Park, Emerson, 90',
+      'Emerson, Edwardstown, 70',
+      'Edwardstown, Edwardstown (2), 50',
+      'Edwardstown (2), Edwardstown (3), 70',
+      'Edwardstown (3), Woodlands Park, 110',
+      'Woodlands Park, Ascot Park, 90',
+      'Ascot Park, Marion, 110',
+      'Marion, Marion (2), 90',
+      'Marion (2), Oaklands, 60',
+      'Oaklands, Warradale, 100',
+      'Warradale, Hove, 55',
+      'Hove, Brighton, 55',
+      'Brighton, Seacliff, 80',
+      'Seacliff, Marino, 100',
+      'Marino, Marino Rocks, 100',
+      'Marino Rocks, Hallett Cove, 100',
+      'Hallett Cove, Hallett Cove Beach, 100',
+      'Hallett Cove Beach, Hallett Cove Beach (2), 85',
+      'Hallett Cove Beach (2), Hallett Cove Beach (3), 100',
+      'Hallett Cove Beach (3), Hallett Cove Beach (4), 70',
+      'Hallett Cove Beach (4), Hallett Cove Beach (5), 100',
+      'Hallett Cove Beach (5), Lonsdale, 110',
+      'Lonsdale, Christie Downs, 85',
+      'Christie Downs, Christie Downs (2), 110',
+      'Christie Downs (2), Noarlunga, 70',
+      'Noarlunga, Noarlunga (2), 110',
+      'Noarlunga (2), Seaford Meadows, 100',
+      'Seaford Meadows, Seaford, 70',
+      'Seaford, End of Line, 25',
+    ].join('\n'),
+    gawler_down: [
+      'Adelaide, Adelaide (2), 15',
+      'Adelaide (2), Adelaide (3), 35',
+      'Adelaide (3), (Neutral Section), 70',
+      '(Neutral Section), (Neutral Section) (2), 75',
+      '(Neutral Section) (2), North Adelaide, 110',
+      'North Adelaide, Ovingham, 80',
+      'Ovingham, Dudley Park, 110',
+      'Dudley Park, Islington, 80',
+      'Islington, Islington (2), 110',
+      'Islington (2), Islington (3), 70',
+      'Islington (3), Islington (4), 85',
+      'Islington (4), Kilburn, 105',
+      'Kilburn, (Neutral Section), 110',
+      '(Neutral Section), Dry Creek, 100',
+      'Dry Creek, Mawson Lakes, 110',
+      'Mawson Lakes, Greenfields, 110',
+      'Greenfields, Parafield Gardens, 110',
+      'Parafield Gardens, Parafield, 110',
+      'Parafield, Chidda, 110',
+      'Chidda, Salisbury, 70',
+      'Salisbury, Salisbury (2), 15, Siding',
+      'Salisbury (2), Nurlutta, 110',
+      'Nurlutta, Elizabeth South, 110',
+      'Elizabeth South, Elizabeth, 110',
+      'Elizabeth, Womma, 85',
+      'Womma, Broadmeadows, 110',
+      'Broadmeadows, Smithfield, 110',
+      'Smithfield, Smithfield (2), 100',
+      'Smithfield (2), Munno Para, 110',
+      'Munno Para, Kudla, 110',
+      'Kudla, Tamblin, 110',
+      'Tamblin, Evanston, 110',
+      'Evanston, Gawler Racecourse, 50',
+      'Gawler Racecourse, Gawler (Platforms 1 & 2), 30, Platforms 1 & 2',
+      'Gawler (Platforms 1 & 2), Gawler (Platform 3), 30',
+      'Gawler (Platform 3), Gawler (Platform 3) (2), 20, Platform 3',
+      'Gawler (Platform 3) (2), Gawler Oval, 50, Platform 3',
+      'Gawler Oval, Gawler Central, 50',
+    ].join('\n'),
+    gawler_up: [
+      'Gawler Central, Gawler Central (2), 25',
+      'Gawler Central (2), Gawler Oval, 50',
+      'Gawler Oval, Gawler (Platform 3), 50, Platform 3',
+      'Gawler (Platform 3), Gawler (Platforms 1 & 2), 50',
+      'Gawler (Platforms 1 & 2), Gawler Racecourse, 30, Platforms 1 & 2',
+      'Gawler Racecourse, Evanston, 100',
+      'Evanston, Tamblin, 110',
+      'Tamblin, Kudla, 110',
+      'Kudla, Kudla (2), 105',
+      'Kudla (2), Munno Para, 110',
+      'Munno Para, Smithfield, 110',
+      'Smithfield, Broadmeadows, 110',
+      'Broadmeadows, Womma, 100',
+      'Womma, Elizabeth, 110',
+      'Elizabeth, Elizabeth South, 110',
+      'Elizabeth South, Nurlutta, 110',
+      'Nurlutta, Salisbury, 70',
+      'Salisbury, Chidda, 110',
+      'Chidda, Parafield, 110',
+      'Parafield, Parafield Gardens, 110',
+      'Parafield Gardens, Greenfields, 110',
+      'Greenfields, Mawson Lakes, 110',
+      'Mawson Lakes, Dry Creek, 110',
+      'Dry Creek, Dry Creek (2), 100',
+      'Dry Creek (2), (Neutral Section), 110',
+      '(Neutral Section), Kilburn, 90',
+      'Kilburn, Kilburn (2), 110',
+      'Kilburn (2), Islington, 80',
+      'Islington, Dudley Park, 110',
+      'Dudley Park, Ovingham, 80',
+      'Ovingham, North Adelaide, 110',
+      'North Adelaide, North Adelaide (2), 75',
+      'North Adelaide (2), (Neutral Section), 70',
+      '(Neutral Section), (Neutral Section) (2), 35',
+      '(Neutral Section) (2), (Neutral Section) (3), 15',
+      '(Neutral Section) (3), Adelaide, 5',
+    ].join('\n'),
+    grange_down: [
+      'Adelaide, Adelaide (2), 15',
+      'Adelaide (2), Adelaide (3), 35',
+      'Adelaide (3), Adelaide (4), 70',
+      'Adelaide (4), Bowden, 90',
+      'Bowden, Croyden, 90',
+      'Croyden, West Croyden, 90',
+      'West Croyden, Kilkenny, 90',
+      'Kilkenny, Woodville Park, 80',
+      'Woodville Park, Woodville, 80',
+      'Woodville, Woodville (2), 35',
+      'Woodville (2), Woodville (3), 40',
+      'Woodville (3), Albert Park, 80',
+      'Albert Park, Seaton Park, 80',
+      'Seaton Park, Seaton Park (2), 55',
+      'Seaton Park (2), East Grange, 80',
+      'East Grange, Grange, 10',
+    ].join('\n'),
+    grange_up: [
+      'Grange, Grange (2), 10',
+      'Grange (2), East Grange, 80',
+      'East Grange, East Grange (2), 55',
+      'East Grange (2), Seaton Park, 80',
+      'Seaton Park, Albert Park, 80',
+      'Albert Park, Albert Park (2), 50',
+      'Albert Park (2), Woodville, 40',
+      'Woodville, Woodville Park, 70',
+      'Woodville Park, Kilkenny, 70',
+      'Kilkenny, West Croyden, 90',
+      'West Croyden, Croyden, 90',
+      'Croyden, Bowden, 90',
+      'Bowden, Bowden (2), 70',
+      'Bowden (2), Bowden (3), 35',
+      'Bowden (3), Bowden (4), 15',
+      'Bowden (4), Adelaide, 5',
+    ].join('\n'),
+    outerharbor_down: [
+      'Adelaide, Adelaide (2), 15',
+      'Adelaide (2), Adelaide (3), 35',
+      'Adelaide (3), Adelaide (4), 70',
+      'Adelaide (4), Bowden, 90',
+      'Bowden, Croyden, 90',
+      'Croyden, West Croyden, 90',
+      'West Croyden, Kilkenny, 90',
+      'Kilkenny, Woodville Park, 80',
+      'Woodville Park, Woodville, 90',
+      'Woodville, St Clair, 90',
+      'St Clair, Cheltenham, 90',
+      'Cheltenham, Alberton, 40',
+      'Alberton, Alberton (2), 90',
+      'Alberton (2), Alberton (3), 80',
+      'Alberton (3), Alberton (4), 70',
+      'Alberton (4), Port Adelaide, 40',
+      'Port Adelaide, Port Adelaide (2), 90',
+      'Port Adelaide (2), Ethelton, 40',
+      'Ethelton, Glanville, 50',
+      'Glanville, Peterhead, 65',
+      'Peterhead, Largs, 65',
+      'Largs, Largs North, 65',
+      'Largs North, Draper, 65',
+      'Draper, Draper (2), 80',
+      'Draper (2), Taperoo, 65',
+      'Taperoo, Midlunga, 80',
+      'Midlunga, Osborne, 80',
+      'Osborne, North Haven, 65',
+      'North Haven, Outer Harbor, 50',
+    ].join('\n'),
+    outerharbor_up: [
+      'Outer Harbor, Outer Harbor (2), 50',
+      'Outer Harbor (2), North Haven, 65',
+      'North Haven, Osborne, 80',
+      'Osborne, Midlunga, 80',
+      'Midlunga, Taperoo, 65',
+      'Taperoo, Taperoo (2), 80',
+      'Taperoo (2), Draper, 65',
+      'Draper, Largs North, 65',
+      'Largs North, Largs, 65',
+      'Largs, Peterhead, 65',
+      'Peterhead, Glanville, 65',
+      'Glanville, Glanville (2), 35',
+      'Glanville (2), Glanville (3), 50',
+      'Glanville (3), Ethelton, 40',
+      'Ethelton, Ethelton (2), 90',
+      'Ethelton (2), Port Adelaide, 40',
+      'Port Adelaide, Port Adelaide (2), 70',
+      'Port Adelaide (2), Port Adelaide (3), 80',
+      'Port Adelaide (3), Port Adelaide (4), 90',
+      'Port Adelaide (4), Alberton, 40',
+      'Alberton, Cheltenham, 90',
+      'Cheltenham, St Clair, 90',
+      'St Clair, Woodville, 90',
+      'Woodville, Woodville Park, 70',
+      'Woodville Park, Kilkenny, 70',
+      'Kilkenny, West Croyden, 90',
+      'West Croyden, Croyden, 90',
+      'Croyden, Bowden, 90',
+      'Bowden, Bowden (2), 70',
+      'Bowden (2), Bowden (3), 35',
+      'Bowden (3), Bowden (4), 15',
+      'Bowden (4), Adelaide, 5',
+    ].join('\n'),
+    portdock_down: [
+      'Adelaide, Adelaide (2), 15',
+      'Adelaide (2), Adelaide (3), 35',
+      'Adelaide (3), Adelaide (4), 70',
+      'Adelaide (4), Bowden, 90',
+      'Bowden, Croyden, 90',
+      'Croyden, West Croyden, 90',
+      'West Croyden, Kilkenny, 90',
+      'Kilkenny, Woodville Park, 80',
+      'Woodville Park, Woodville, 90',
+      'Woodville, St Clair, 90',
+      'St Clair, Cheltenham, 90',
+      'Cheltenham, Alberton, 40',
+      'Alberton, Alberton (2), 90',
+      'Alberton (2), Alberton (3), 35',
+      'Alberton (3), Port Dock, 15',
+    ].join('\n'),
+    portdock_up: [
+      'Port Dock, Port Dock (2), 35',
+      'Port Dock (2), Port Dock (3), 90',
+      'Port Dock (3), Alberton, 40',
+      'Alberton, Cheltenham, 90',
+      'Cheltenham, St Clair, 90',
+      'St Clair, Woodville, 90',
+      'Woodville, Woodville Park, 70',
+      'Woodville Park, Kilkenny, 70',
+      'Kilkenny, West Croyden, 90',
+      'West Croyden, Croyden, 90',
+      'Croyden, Bowden, 90',
+      'Bowden, Bowden (2), 70',
+      'Bowden (2), Bowden (3), 35',
+      'Bowden (3), Bowden (4), 15',
+      'Bowden (4), Adelaide, 5',
+    ].join('\n'),
+    seaford_up: [
+      'Seaford, Seaford (2), 70',
+      'Seaford (2), Seaford Meadows, 100',
+      'Seaford Meadows, Seaford Meadows (2), 110',
+      'Seaford Meadows (2), Noarlunga, 70',
+      'Noarlunga, Christie Downs, 100',
+      'Christie Downs, Lonsdale, 110',
+      'Lonsdale, Lonsdale (2), 100',
+      'Lonsdale (2), Lonsdale (3), 85',
+      'Lonsdale (3), Hallett Cove Beach, 100',
+      'Hallett Cove Beach, Hallett Cove, 100',
+      'Hallett Cove, Marino Rocks, 70',
+      'Marino Rocks, Marino, 80',
+      'Marino, Seacliff, 110',
+      'Seacliff, Brighton, 60',
+      'Brighton, Hove, 45',
+      'Hove, Warradale, 100',
+      'Warradale, Oaklands, 60',
+      'Oaklands, Oaklands (2), 90',
+      'Oaklands (2), Marion, 110',
+      'Marion, Ascot Park, 90',
+      'Ascot Park, Woodlands Park, 80',
+      'Woodlands Park, Woodlands Park (2), 40',
+      'Woodlands Park (2), Edwardstown, 75',
+      'Edwardstown, Emerson, 75',
+      'Emerson, Clarence Park, 90',
+      'Clarence Park, Goodwood, 60',
+      'Goodwood, Showgrounds, 80',
+      'Showgrounds, Mile End, 110',
+      'Mile End, Mile End (2), 80',
+      'Mile End (2), Mile End (3), 60',
+      'Mile End (3), Mile End (4), 35',
+      'Mile End (4), Mile End (5), 15',
+      'Mile End (5), Adelaide, 5',
+    ].join('\n'),
+    belair_down: [
+      'Adelaide, Adelaide (2), 15',
+      'Adelaide (2), Adelaide (3), 35',
+      'Adelaide (3), Adelaide (4), 55',
+      'Adelaide (4), Mile End, 85',
+      'Mile End, Mile End (2), 110',
+      'Mile End (2), Mile End (3), 90',
+      'Mile End (3), Mile End (4), 35',
+      'Mile End (4), Showgrounds, 60',
+      'Showgrounds, Goodwood, 60',
+      'Goodwood, Millswood, 90',
+      'Millswood, Unley Park, 90',
+      'Unley Park, Mitcham, 90',
+      'Mitcham, Mitcham (2), 55',
+      'Mitcham (2), Torrens Park, 90',
+      'Torrens Park, Lynton, 90',
+      'Lynton, Lynton (2), 65',
+      'Lynton (2), Lynton (3), 55',
+      'Lynton (3), Lynton (4), 90',
+      'Lynton (4), Lynton (5), 50',
+      'Lynton (5), Eden Hills, 40',
+      'Eden Hills, Eden Hills (2), 50',
+      'Eden Hills (2), Eden Hills (3), 40',
+      'Eden Hills (3), Coromandel, 50',
+      'Coromandel, Coromandel (2), 40',
+      'Coromandel (2), Blackwood, 35',
+      'Blackwood, Blackwood (2), 45',
+      'Blackwood (2), Glenalta, 55',
+      'Glenalta, Pinera, 40',
+      'Pinera, Belair, 35',
+    ].join('\n'),
+    belair_up: [
+      'Belair, Belair (2), 35',
+      'Belair (2), Pinera, 40',
+      'Pinera, Glenalta, 55',
+      'Glenalta, Glenalta (2), 45',
+      'Glenalta (2), Blackwood, 35',
+      'Blackwood, Coromandel, 50',
+      'Coromandel, Coromandel (2), 40',
+      'Coromandel (2), Coromandel (3), 50',
+      'Coromandel (3), Eden Hills, 40',
+      'Eden Hills, Eden Hills (2), 50',
+      'Eden Hills (2), Eden Hills (3), 90',
+      'Eden Hills (3), Eden Hills (4), 55',
+      'Eden Hills (4), Eden Hills (5), 65',
+      'Eden Hills (5), Lynton, 90',
+      'Lynton, Torrens Park, 90',
+      'Torrens Park, Torrens Park (2), 55',
+      'Torrens Park (2), Mitcham, 90',
+      'Mitcham, Unley Park, 90',
+      'Unley Park, Millswood, 90',
+      'Millswood, Goodwood, 60',
+      'Goodwood, Showgrounds, 80',
+      'Showgrounds, Mile End, 110',
+      'Mile End, Mile End (2), 85',
+      'Mile End (2), Mile End (3), 55',
+      'Mile End (3), Mile End (4), 35',
+      'Mile End (4), Mile End (5), 15',
+      'Mile End (5), Adelaide, 5',
+    ].join('\n'),
+    tonsley_down: [
+      'Adelaide, Adelaide (2), 15',
+      'Adelaide (2), Adelaide (3), 35',
+      'Adelaide (3), Mile End, 60',
+      'Mile End, Showgrounds, 110',
+      'Showgrounds, Showgrounds (2), 80',
+      'Showgrounds (2), Goodwood, 60',
+      'Goodwood, Clarence Park, 90',
+      'Clarence Park, Emerson, 90',
+      'Emerson, Edwardstown, 70',
+      'Edwardstown, Edwardstown (2), 50',
+      'Edwardstown (2), Edwardstown (3), 70',
+      'Edwardstown (3), Woodlands Park, 110',
+      'Woodlands Park, Woodlands Park (2), 40',
+      'Woodlands Park (2), Woodlands Park (3), 90',
+      'Woodlands Park (3), Mitchell Park, 70',
+      'Mitchell Park, Mitchell Park (2), 80',
+      'Mitchell Park (2), Tonsley, 70',
+      'Tonsley, Tonsley (2), 50',
+      'Tonsley (2), Flinders, 15',
+    ].join('\n'),
+    tonsley_up: [
+      'Flinders, Flinders (2), 50',
+      'Flinders (2), Tonsley, 70',
+      'Tonsley, Tonsley (2), 80',
+      'Tonsley (2), Mitchell Park, 45',
+      'Mitchell Park, Mitchell Park (2), 35, No board \u2013 turn out',
+      'Mitchell Park (2), Mitchell Park (3), 90',
+      'Mitchell Park (3), Mitchell Park (4), 35, No board \u2013 turn out',
+      'Mitchell Park (4), Woodlands Park, 80',
+      'Woodlands Park, Woodlands Park (2), 40',
+      'Woodlands Park (2), Edwardstown, 75',
+      'Edwardstown, Emerson, 75',
+      'Emerson, Clarence Park, 90',
+      'Clarence Park, Goodwood, 60',
+      'Goodwood, Showgrounds, 80',
+      'Showgrounds, Mile End, 110',
+      'Mile End, Mile End (2), 80',
+      'Mile End (2), Mile End (3), 60',
+      'Mile End (3), Mile End (4), 35',
+      'Mile End (4), Mile End (5), 15',
+      'Mile End (5), Adelaide, 5',
+    ].join('\n'),
+  };
+
+  const SEED_VERSION = {
+    seaford_down: 'card-v1',
+    seaford_up: 'card-v1',
+    gawler_down: 'card-v3',
+    gawler_up: 'card-v2',
+    grange_down: 'card-v1',
+    grange_up: 'card-v1',
+    outerharbor_down: 'card-v1',
+    outerharbor_up: 'card-v1',
+    portdock_down: 'card-v1',
+    portdock_up: 'card-v1',
+    belair_down: 'card-v1',
+    belair_up: 'card-v1',
+    tonsley_down: 'card-v1',
+    tonsley_up: 'card-v2',
+  };
+
+  async function loadSegments(lineId){
+    if(segCache[lineId]) return segCache[lineId];
+    let arr;
+    try{
+      const res = await storageAdapter.get(storageKey(lineId), false);
+      if(res && res.value){
+        arr = JSON.parse(res.value);
+      } else if(SEED_DATA[lineId]){
+        arr = parseSegmentLines(SEED_DATA[lineId]);
+        await saveSegments(lineId, arr);
+      } else {
+        arr = [];
+      }
+    }catch(e){
+      if(SEED_DATA[lineId]){
+        arr = parseSegmentLines(SEED_DATA[lineId]);
+        await saveSegments(lineId, arr);
+      } else {
+        arr = [];
+      }
+    }
+
+    // one-time forced reseed when a newer, cleaner source is available
+    if(SEED_VERSION[lineId]){
+      const verKey = 'seedver:' + lineId;
+      let storedVer = null;
+      try{
+        const vres = await storageAdapter.get(verKey, false);
+        storedVer = vres && vres.value ? vres.value : null;
+      }catch(e){ storedVer = null; }
+      if(storedVer !== SEED_VERSION[lineId]){
+        arr = parseSegmentLines(SEED_DATA[lineId]);
+        await saveSegments(lineId, arr);
+        try{ await storageAdapter.set(verKey, SEED_VERSION[lineId], false); }catch(e){}
+      }
+    }
+
+    segCache[lineId] = arr;
+    return arr;
+  }
+
+  async function saveSegments(lineId, arr){
+    segCache[lineId] = arr;
+    try{
+      await storageAdapter.set(storageKey(lineId), JSON.stringify(arr), false);
+    }catch(e){
+      console.error('Storage save failed', e);
+    }
+  }
+
+  function currentLine(){ return LINES.find(l => l.id === activeLine); }
+
+  function renderTabs(){
+    tabsEl.innerHTML = '';
+    LINES.forEach(line => {
+      const btn = document.createElement('button');
+      btn.className = 'rk-tab' + (line.id === activeLine ? ' active' : '');
+      btn.style.setProperty('--line-hue', line.hue);
+      btn.textContent = line.name + (line.direction ? ' \u2014 ' + line.direction : '');
+      btn.onclick = () => { exitQuiz(); activeLine = line.id; showAddForm = false; showImportForm = false; showTrackSpeeds = false; renderTabs(); renderBody(); };
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  function exitQuiz(){
+    quizModeType = null;
+    quizRangeGuesses = {};
+    quizRangeBoxChecked = {};
+  }
+
+  async function renderBody(){
+    networkBtn.textContent = showNetwork ? 'Back to Lines' : 'Network Overview';
+    trackBtn.textContent = showTrackSpeeds ? 'Back to Lines' : 'Track Speeds';
+    tabsEl.style.display = (showNetwork || showTrackSpeeds) ? 'none' : '';
+
+    if(showNetwork){
+      bodyEl.innerHTML = '';
+      renderNetworkOverview();
+      return;
+    }
+    if(showTrackSpeeds){
+      bodyEl.innerHTML = '';
+      renderTrackSpeeds();
+      return;
+    }
+
+    const line = currentLine();
+    const segs = await loadSegments(line.id);
+    bodyEl.innerHTML = '';
+    bodyEl.style.setProperty('--line-hue', line.hue);
+
+    // mode bar
+    const modebar = document.createElement('div');
+    modebar.className = 'rk-modebar';
+    const label = document.createElement('div');
+    label.className = 'rk-linelabel';
+    const dirBadge = line.direction ? ' <span class="rk-tag" style="vertical-align:middle;">' + line.direction.toUpperCase() + '</span>' : '';
+    label.innerHTML = line.name + dirBadge + '<span class="n">' + segs.length + ' segment' + (segs.length===1?'':'s') + ' recorded</span>';
+    modebar.appendChild(label);
+
+    const btnRow = document.createElement('div');
+    btnRow.style.display = 'flex';
+    btnRow.style.gap = '8px';
+    btnRow.style.flexWrap = 'wrap';
+
+    if(quizModeType){
+      const exitBtn = document.createElement('button');
+      exitBtn.className = 'rk-btn quiz-active';
+      exitBtn.textContent = 'Exit Quiz';
+      exitBtn.onclick = () => { exitQuiz(); renderBody(); };
+      btnRow.appendChild(exitBtn);
+    } else {
+      const rangeQuizBtn = document.createElement('button');
+      rangeQuizBtn.className = 'rk-btn';
+      rangeQuizBtn.textContent = 'Start Quiz';
+      rangeQuizBtn.disabled = segs.length === 0;
+      rangeQuizBtn.style.opacity = rangeQuizBtn.disabled ? '0.4' : '1';
+      rangeQuizBtn.onclick = () => {
+        quizRangeGuesses = {}; quizRangeBoxChecked = {};
+        quizModeType = 'range'; showAddForm = false; showImportForm = false;
+        renderBody();
+      };
+      btnRow.appendChild(rangeQuizBtn);
+
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'rk-btn primary';
+      addBtn.textContent = showAddForm ? 'Close' : '+ Add Segment';
+      addBtn.onclick = () => { showAddForm = !showAddForm; showImportForm = false; renderBody(); };
+      btnRow.appendChild(addBtn);
+
+      const importBtn = document.createElement('button');
+      importBtn.className = 'rk-btn';
+      importBtn.textContent = showImportForm ? 'Close' : 'Bulk Import';
+      importBtn.onclick = () => { showImportForm = !showImportForm; showAddForm = false; renderBody(); };
+      btnRow.appendChild(importBtn);
+    }
+    modebar.appendChild(btnRow);
+    bodyEl.appendChild(modebar);
+
+    if(quizModeType === 'range'){
+      renderQuizRange(segs, line);
+      return;
+    }
+
+    // track diagram
+    if(segs.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'rk-empty';
+      empty.innerHTML = '<div class="big">No segments recorded yet</div>' +
+        'Add sections from your official route knowledge notes — station pair, max speed, gradient, and anything else worth remembering.';
+      bodyEl.appendChild(empty);
+    } else {
+      const track = document.createElement('div');
+      track.className = 'rk-track';
+      segs.forEach((seg, i) => track.appendChild(renderSegCard(seg, i, line, segs)));
+      bodyEl.appendChild(track);
+    }
+
+    if(showAddForm){
+      bodyEl.appendChild(renderAddForm(line, segs));
+    }
+    if(showImportForm){
+      bodyEl.appendChild(renderImportForm(line, segs));
+    }
+
+    if(segs.length > 0 && !showAddForm && !showImportForm){
+      const revealWrap = document.createElement('div');
+      revealWrap.style.cssText = 'text-align:center; margin-top:22px;';
+      const revealLink = document.createElement('button');
+      revealLink.textContent = hideSpeeds ? 'unhide speeds' : 'hide speeds again';
+      revealLink.style.cssText = 'background:none; border:none; color:var(--steel); font-family:\'JetBrains Mono\',monospace; font-size:10px; letter-spacing:0.04em; cursor:pointer; padding:4px 8px; opacity:0.5;';
+      revealLink.onmouseover = () => { revealLink.style.opacity = '0.85'; };
+      revealLink.onmouseout = () => { revealLink.style.opacity = '0.5'; };
+      revealLink.onclick = () => { hideSpeeds = !hideSpeeds; renderBody(); };
+      revealWrap.appendChild(revealLink);
+      bodyEl.appendChild(revealWrap);
+    }
+  }
+
+  function parseCardFormat(text){
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const numRe = /^\d+(\.\d+)?$/;
+    const leadingNumParen = /^(\d+(?:\.\d+)?)\s*\((.*)\)$/; // e.g. "35 (no board placed - turn out)"
+    const kphEmbedded = /\(([^)]*?)(\d+(?:\.\d+)?)\s*k?ph([^)]*)\)/i; // e.g. "(Siding - 15 kph)"
+    const stations = [];
+    let current = null;
+    lines.forEach(line => {
+      let speedVal = null;
+      let noteVal = null;
+      if(numRe.test(line)){
+        speedVal = line;
+      } else {
+        const m1 = line.match(leadingNumParen);
+        if(m1){
+          speedVal = m1[1];
+          noteVal = m1[2].trim();
+        } else {
+          const m2 = line.match(kphEmbedded);
+          if(m2){
+            speedVal = m2[2];
+            noteVal = (m2[1] + m2[3]).replace(/[-–]\s*$/, '').trim();
+          }
+        }
+      }
+      if(speedVal !== null){
+        if(current) current.speeds.push({ value: speedVal, note: noteVal });
+      } else {
+        current = { name: line, speeds: [] };
+        stations.push(current);
+      }
+    });
+
+    const segments = [];
+    let lastSpeed = null;
+    for(let i = 0; i < stations.length - 1; i++){
+      const cur = stations[i];
+      const next = stations[i+1];
+      if(cur.speeds.length === 0){
+        segments.push({ from: cur.name, to: next.name, speed: lastSpeed !== null ? lastSpeed : '', note: undefined });
+      } else {
+        let fromPoint = cur.name;
+        cur.speeds.forEach((sp, j) => {
+          const isLast = j === cur.speeds.length - 1;
+          const toPoint = isLast ? next.name : (cur.name + ' (' + (j+2) + ')');
+          segments.push({ from: fromPoint, to: toPoint, speed: sp.value, note: sp.note || undefined });
+          lastSpeed = sp.value;
+          fromPoint = toPoint;
+        });
+      }
+    }
+    const last = stations[stations.length - 1];
+    if(last && last.speeds.length){
+      let fromPoint = last.name;
+      last.speeds.forEach((sp, j) => {
+        const isLast = j === last.speeds.length - 1;
+        const toPoint = isLast ? 'End of Line' : (last.name + ' (' + (j+2) + ')');
+        segments.push({ from: fromPoint, to: toPoint, speed: sp.value, note: sp.note || undefined });
+        fromPoint = toPoint;
+      });
+    }
+    return segments.map(s => ({
+      id: 'seg_' + Date.now() + '_' + Math.floor(Math.random()*1000000),
+      from: s.from,
+      to: s.to,
+      speed: s.speed,
+      note: s.note,
+    }));
+  }
+
+  let importFormatMode = 'row'; // 'row' | 'card'
+
+  function renderImportForm(line, segs){
+    const wrap = document.createElement('div');
+    wrap.className = 'rk-form';
+    const title = document.createElement('p');
+    title.className = 'rk-form-title';
+    title.textContent = 'Bulk Import';
+    wrap.appendChild(title);
+
+    const toggleRow = document.createElement('div');
+    toggleRow.style.cssText = 'display:flex; gap:6px; margin-bottom:12px;';
+    const rowModeBtn = document.createElement('button');
+    rowModeBtn.type = 'button';
+    rowModeBtn.textContent = 'Row Format';
+    const cardModeBtn = document.createElement('button');
+    cardModeBtn.type = 'button';
+    cardModeBtn.textContent = 'Station Card Format';
+    [rowModeBtn, cardModeBtn].forEach(b => {
+      b.className = 'rk-icon-btn';
+      b.style.cssText += 'padding:6px 12px; font-size:11px;';
+    });
+    function styleToggle(){
+      rowModeBtn.style.background = importFormatMode === 'row' ? 'var(--panel-raised)' : 'none';
+      rowModeBtn.style.color = importFormatMode === 'row' ? 'var(--paper)' : 'var(--muted)';
+      cardModeBtn.style.background = importFormatMode === 'card' ? 'var(--panel-raised)' : 'none';
+      cardModeBtn.style.color = importFormatMode === 'card' ? 'var(--paper)' : 'var(--muted)';
+    }
+    styleToggle();
+    rowModeBtn.onclick = () => { importFormatMode = 'row'; showImportForm = true; renderBody(); };
+    cardModeBtn.onclick = () => { importFormatMode = 'card'; showImportForm = true; renderBody(); };
+    toggleRow.appendChild(rowModeBtn);
+    toggleRow.appendChild(cardModeBtn);
+    wrap.appendChild(toggleRow);
+
+    const hint = document.createElement('p');
+    hint.style.cssText = 'font-family:JetBrains Mono, monospace; font-size:11.5px; color:var(--muted); margin:0 0 10px; line-height:1.5;';
+    const field = document.createElement('div');
+    field.className = 'rk-field';
+    const textarea = document.createElement('textarea');
+    textarea.style.minHeight = '180px';
+
+    if(importFormatMode === 'card'){
+      hint.textContent = 'Paste a station card as-is: station name on its own line, followed by each speed change before the next station (blank line between stations if you like). No speed lines under a station just means the speed carries through unchanged.';
+      textarea.placeholder = 'Adelaide\n15\n35\n60\nMile End\n110\nShowgrounds\n80\n60\nGoodwood\n90\nClarence Park\nEmerson\n70\n...';
+    } else {
+      hint.textContent = 'One segment per line: From, To, Speed (km/h). Example: Adelaide, Goodwood, 90';
+      textarea.placeholder = 'Adelaide, Goodwood, 90\nGoodwood, Adelaide, 90\nGoodwood, Clarence Park, 100\n...';
+    }
+    wrap.appendChild(hint);
+    field.appendChild(textarea);
+    wrap.appendChild(field);
+
+    const status = document.createElement('p');
+    status.style.cssText = 'font-family:JetBrains Mono, monospace; font-size:12px; margin:10px 0 0;';
+    wrap.appendChild(status);
+
+    const actions = document.createElement('div');
+    actions.className = 'rk-form-actions';
+    const importBtnGo = document.createElement('button');
+    importBtnGo.className = 'rk-btn primary';
+    importBtnGo.textContent = 'Import';
+    importBtnGo.onclick = async () => {
+      let added, skipped;
+      if(importFormatMode === 'card'){
+        added = parseCardFormat(textarea.value);
+        skipped = 0;
+      } else {
+        const lines = textarea.value.split('\n').map(l => l.trim()).filter(Boolean);
+        added = parseSegmentLines(textarea.value);
+        skipped = lines.length - added.length;
+      }
+      const updated = [...segs, ...added];
+      await saveSegments(line.id, updated);
+      status.style.color = skipped ? 'var(--yellow)' : 'var(--green)';
+      status.textContent = 'Added ' + added.length + ' segment' + (added.length===1?'':'s') +
+        (skipped ? ('. Skipped ' + skipped + ' line(s) — needs From, To, Speed.') : '.');
+      if(added.length){
+        setTimeout(() => { showImportForm = false; renderBody(); }, 900);
+      }
+    };
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'rk-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => { showImportForm = false; renderBody(); };
+    actions.appendChild(importBtnGo);
+    actions.appendChild(cancelBtn);
+    wrap.appendChild(actions);
+
+    return wrap;
+  }
+
+  function renderSegCard(seg, i, line, segs){
+    const card = document.createElement('div');
+    card.className = 'rk-seg';
+
+    const top = document.createElement('div');
+    top.className = 'rk-seg-top';
+
+    const left = document.createElement('div');
+    left.style.flex = '1';
+    left.style.minWidth = '180px';
+    const stations = document.createElement('div');
+    stations.className = 'rk-stations';
+    stations.innerHTML = escapeHtml(seg.from) + '<span class="arrow">→</span>' + escapeHtml(seg.to);
+    left.appendChild(stations);
+    if(seg.note){
+      const noteTags = document.createElement('div');
+      noteTags.className = 'rk-tags';
+      noteTags.appendChild(makeTag(seg.note));
+      left.appendChild(noteTags);
+    }
+    top.appendChild(left);
+
+    const board = document.createElement('div');
+    board.className = 'rk-board';
+    if(hideSpeeds){
+      board.classList.add('hidden');
+      board.innerHTML = '?<span class="u">km/h</span>';
+      board.style.cursor = 'pointer';
+      board.title = 'Click to reveal';
+      board.onclick = () => {
+        board.classList.remove('hidden');
+        board.innerHTML = (seg.speed || '—') + '<span class="u">km/h</span>';
+        board.style.cursor = 'default';
+        board.onclick = null;
+      };
+    } else {
+      board.innerHTML = (seg.speed || '—') + '<span class="u">km/h</span>';
+    }
+    top.appendChild(board);
+
+    card.appendChild(top);
+
+    const actions = document.createElement('div');
+    actions.className = 'rk-seg-actions';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'rk-icon-btn';
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = () => { openEditForm(seg, line, segs); };
+    const delBtn = document.createElement('button');
+    delBtn.className = 'rk-icon-btn danger';
+    delBtn.textContent = 'Delete';
+    delBtn.onclick = async () => {
+      const updated = segs.filter(s => s.id !== seg.id);
+      await saveSegments(line.id, updated);
+      renderBody();
+    };
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    card.appendChild(actions);
+
+    return card;
+  }
+
+  function makeTag(text){
+    const t = document.createElement('span');
+    t.className = 'rk-tag';
+    t.textContent = text;
+    return t;
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : str;
+    return d.innerHTML;
+  }
+
+  function renderAddForm(line, segs, editSeg){
+    const wrap = document.createElement('div');
+    wrap.className = 'rk-form';
+    const title = document.createElement('p');
+    title.className = 'rk-form-title';
+    title.textContent = editSeg ? 'Edit Segment' : 'Add Segment';
+    wrap.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'rk-form-grid';
+
+    const fFrom = fieldInput('From station', 'from', editSeg && editSeg.from);
+    const fTo = fieldInput('To station', 'to', editSeg && editSeg.to);
+    grid.appendChild(fFrom.wrap); grid.appendChild(fTo.wrap);
+    wrap.appendChild(grid);
+
+    const gridFull = document.createElement('div');
+    gridFull.className = 'rk-form-grid full';
+    const fSpeed = fieldInput('Max speed (km/h)', 'speed', editSeg && editSeg.speed, 'number');
+    gridFull.appendChild(fSpeed.wrap);
+    wrap.appendChild(gridFull);
+
+    const actions = document.createElement('div');
+    actions.className = 'rk-form-actions';
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'rk-btn primary';
+    saveBtn.textContent = editSeg ? 'Save Changes' : 'Add to Line';
+    saveBtn.onclick = async () => {
+      const fromVal = fFrom.input.value.trim();
+      const toVal = fTo.input.value.trim();
+      if(!fromVal || !toVal){ fFrom.input.focus(); return; }
+      const newSeg = {
+        id: editSeg ? editSeg.id : ('seg_' + Date.now() + '_' + Math.floor(Math.random()*1000)),
+        from: fromVal,
+        to: toVal,
+        speed: fSpeed.input.value.trim(),
+      };
+      let updated;
+      if(editSeg){
+        updated = segs.map(s => s.id === editSeg.id ? newSeg : s);
+      } else {
+        updated = [...segs, newSeg];
+      }
+      await saveSegments(line.id, updated);
+      showAddForm = false;
+      renderBody();
+    };
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'rk-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => { showAddForm = false; renderBody(); };
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+    wrap.appendChild(actions);
+
+    return wrap;
+  }
+
+  function fieldInput(labelText, name, value, type){
+    const wrap = document.createElement('div');
+    wrap.className = 'rk-field';
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    const input = document.createElement('input');
+    input.type = type || 'text';
+    input.value = value || '';
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    return {wrap, input};
+  }
+
+  function fieldTextarea(labelText, name, value){
+    const wrap = document.createElement('div');
+    wrap.className = 'rk-field';
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    const input = document.createElement('textarea');
+    input.value = value || '';
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    return {wrap, input};
+  }
+
+  function openEditForm(seg, line, segs){
+    showAddForm = false;
+    bodyEl.querySelectorAll('.rk-form').forEach(f => f.remove());
+    bodyEl.appendChild(renderAddForm(line, segs, seg));
+    bodyEl.lastChild.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function isNamedStation(name){
+    if(!name) return false;
+    const n = name.trim();
+    if(n.toLowerCase().startsWith('km ')) return false;
+    if(n.includes('(')) return false;
+    return true;
+  }
+
+  function computeRangePairs(segs){
+    if(!segs.length) return [];
+    const points = [segs[0].from];
+    segs.forEach(s => points.push(s.to));
+    const namedIdx = [];
+    points.forEach((p, i) => { if(isNamedStation(p)) namedIdx.push(i); });
+    const pairs = [];
+    for(let k = 0; k < namedIdx.length - 1; k++){
+      const idxA = namedIdx[k], idxB = namedIdx[k+1];
+      const speeds = [];
+      for(let s = idxA; s < idxB; s++){
+        const sp = segs[s].speed;
+        const note = segs[s].note || null;
+        if(speeds.length === 0 || speeds[speeds.length-1].value !== sp){
+          speeds.push({ value: sp, note: note });
+        } else if(note && !speeds[speeds.length-1].note){
+          speeds[speeds.length-1].note = note;
+        }
+      }
+      pairs.push({ key: idxA + '_' + idxB, from: points[idxA], to: points[idxB], speeds });
+    }
+    return pairs;
+  }
+
+  function renderQuizRange(segs, line){
+    const pairs = computeRangePairs(segs);
+    if(pairs.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'rk-empty';
+      empty.innerHTML = '<div class="big">Not enough named stations yet</div>' +
+        'Range Quiz needs at least two recognizable named stations in this line\u2019s segments to build station-to-station questions.';
+      bodyEl.appendChild(empty);
+      return;
+    }
+
+    // ensure each pair has guess + checked arrays matching its number of speed changes
+    pairs.forEach(pair => {
+      if(!Array.isArray(quizRangeGuesses[pair.key]) || quizRangeGuesses[pair.key].length !== pair.speeds.length){
+        quizRangeGuesses[pair.key] = new Array(pair.speeds.length).fill('');
+      }
+      if(!Array.isArray(quizRangeBoxChecked[pair.key]) || quizRangeBoxChecked[pair.key].length !== pair.speeds.length){
+        quizRangeBoxChecked[pair.key] = new Array(pair.speeds.length).fill(false);
+      }
+    });
+
+    let totalBoxes = 0, checkedBoxes = 0, correctBoxes = 0;
+    pairs.forEach(pair => {
+      pair.speeds.forEach((sp, i) => {
+        totalBoxes++;
+        if(quizRangeBoxChecked[pair.key][i]){
+          checkedBoxes++;
+          const g = quizRangeGuesses[pair.key][i];
+          if(g !== '' && g !== undefined && Number(g) === Number(sp.value)) correctBoxes++;
+        }
+      });
+    });
+
+    const bar = document.createElement('div');
+    bar.className = 'rk-quizbar';
+    if(checkedBoxes === 0){
+      bar.innerHTML = '<span>Type a speed and tab/enter to check it instantly</span><span>' + totalBoxes + ' blanks</span>';
+    } else {
+      bar.innerHTML = '<span>Checked ' + checkedBoxes + ' / ' + totalBoxes + '</span><span>Correct: <b>' + correctBoxes + '</b></span>';
+    }
+    bodyEl.appendChild(bar);
+
+    const track = document.createElement('div');
+    track.className = 'rk-track';
+
+    pairs.forEach(pair => {
+      const card = document.createElement('div');
+      card.className = 'rk-seg';
+
+      const top = document.createElement('div');
+      top.className = 'rk-seg-top';
+      const left = document.createElement('div');
+      left.style.flex = '1';
+      left.style.minWidth = '200px';
+      const stations = document.createElement('div');
+      stations.className = 'rk-stations';
+      stations.innerHTML = escapeHtml(pair.from) + '<span class="arrow">→</span>' + escapeHtml(pair.to);
+      left.appendChild(stations);
+      const hint = document.createElement('div');
+      hint.className = 'rk-tags';
+      hint.appendChild(makeTag(pair.speeds.length + ' speed change' + (pair.speeds.length===1?'':'s')));
+      left.appendChild(hint);
+      top.appendChild(left);
+      card.appendChild(top);
+
+      const boxCol = document.createElement('div');
+      boxCol.style.cssText = 'display:flex; flex-direction:column; gap:6px; margin-top:10px; max-width:260px;';
+
+      pair.speeds.forEach((sp, i) => {
+        const isChecked = quizRangeBoxChecked[pair.key][i];
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:8px;';
+
+        if(!isChecked){
+          const input = document.createElement('input');
+          input.className = 'rk-input';
+          input.type = 'number';
+          input.style.width = '140px';
+          input.placeholder = 'speed ' + (i+1);
+          input.value = quizRangeGuesses[pair.key][i] || '';
+          input.addEventListener('input', () => { quizRangeGuesses[pair.key][i] = input.value; });
+          input.addEventListener('blur', () => {
+            if(input.value.trim() !== ''){
+              quizRangeBoxChecked[pair.key][i] = true;
+              renderBody();
+            }
+          });
+          input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
+          row.appendChild(input);
+        } else {
+          const guess = quizRangeGuesses[pair.key][i];
+          const boxCorrect = guess !== '' && guess !== undefined && Number(guess) === Number(sp.value);
+          const chip = document.createElement('div');
+          chip.className = 'rk-board';
+          chip.style.width = '140px';
+          chip.style.cursor = 'pointer';
+          chip.title = 'Click to try this one again';
+          chip.style.background = boxCorrect ? 'var(--green)' : 'var(--red)';
+          chip.style.color = '#0d1410';
+          chip.innerHTML = boxCorrect
+            ? sp.value + '<span class="u">km/h</span>'
+            : (guess || '—') + ' <span class="u">(was ' + sp.value + ')</span>';
+          chip.onclick = () => { quizRangeBoxChecked[pair.key][i] = false; renderBody(); };
+          row.appendChild(chip);
+        }
+
+        if(sp.note){
+          const noteLabel = document.createElement('span');
+          noteLabel.style.cssText = 'font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--yellow); white-space:nowrap;';
+          noteLabel.textContent = sp.note;
+          row.appendChild(noteLabel);
+        }
+
+        boxCol.appendChild(row);
+      });
+
+      card.appendChild(boxCol);
+      track.appendChild(card);
+    });
+
+    bodyEl.appendChild(track);
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex; gap:10px; margin-top:16px;';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'rk-btn primary';
+    resetBtn.textContent = 'Reset Quiz';
+    resetBtn.onclick = () => { quizRangeGuesses = {}; quizRangeBoxChecked = {}; renderBody(); };
+    actions.appendChild(resetBtn);
+    bodyEl.appendChild(actions);
+
+    if(checkedBoxes < totalBoxes){
+      setTimeout(() => {
+        const firstInput = bodyEl.querySelector('.rk-input');
+        if(firstInput) firstInput.focus();
+      }, 30);
+    }
+  }
+
+  renderTabs();
+  renderBody();
+})();
+</script>
+</body>
+</html>
