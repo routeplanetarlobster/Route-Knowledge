@@ -663,6 +663,7 @@ html, body{
   let comparePickerGroup = null;
   let hideSpeeds = true;
   let showLineHeatmap = false;
+  let heatmapExpanded = {};
   let showAddForm = false;
   let showEditTools = false;
   let showImportForm = false;
@@ -768,17 +769,24 @@ html, body{
 
     pairs.forEach(pair => {
       let attempts = 0, correct = 0;
-      pair.speeds.forEach((sp, i) => {
+      const perSpeed = pair.speeds.map((sp, i) => {
         const key = statKey(line.id, pair.from, pair.to, i);
         const s = statsData[key];
         if(s){ attempts += s.attempts; correct += s.correct; }
+        const spPct = s && s.attempts > 0 ? Math.round((s.correct / s.attempts) * 100) : null;
+        return { value: sp.value, note: sp.note, pct: spPct, attempts: s ? s.attempts : 0, correct: s ? s.correct : 0 };
       });
       const pct = attempts > 0 ? Math.round((correct / attempts) * 100) : null;
       const heatColor = pct === null ? 'var(--steel)' : accuracyColor(pct);
+      const expandKey = line.id + '::' + pair.key;
+      const isExpanded = !!heatmapExpanded[expandKey];
 
       const card = document.createElement('div');
       card.className = 'rk-seg';
       card.style.setProperty('--line-hue', heatColor);
+      card.style.cursor = 'pointer';
+      card.title = isExpanded ? 'Tap to collapse' : 'Tap to reveal the speeds in this stretch';
+      card.onclick = () => { heatmapExpanded[expandKey] = !isExpanded; renderBody(); };
 
       const top = document.createElement('div');
       top.className = 'rk-seg-top';
@@ -786,7 +794,7 @@ html, body{
       left.style.flex = '1';
       const stations = document.createElement('div');
       stations.className = 'rk-stations';
-      stations.innerHTML = escapeHtml(pair.from) + '<span class="arrow">\u2192</span>' + escapeHtml(pair.to);
+      stations.innerHTML = escapeHtml(pair.from) + '<span class="arrow">\u2192</span>' + escapeHtml(pair.to) + (pair.speeds.length > 1 ? ' <span style="font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--muted); font-weight:400;">' + (isExpanded ? '\u25b4' : '\u25be') + '</span>' : '');
       left.appendChild(stations);
       top.appendChild(left);
 
@@ -805,6 +813,27 @@ html, body{
       }
 
       card.appendChild(top);
+
+      if(isExpanded){
+        const speedRow = document.createElement('div');
+        speedRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;';
+        perSpeed.forEach(sp => {
+          const spColor = sp.pct === null ? 'var(--steel)' : accuracyColor(sp.pct);
+          const chip = document.createElement('div');
+          chip.style.cssText = 'background:' + spColor + '; color:#0d1410; border-radius:6px; padding:6px 10px; text-align:center; min-width:64px;';
+          chip.innerHTML = '<div style="font-family:\'Oswald\',sans-serif; font-weight:600; font-size:15px;">' + sp.value + '</div>' +
+            '<div style="font-family:\'JetBrains Mono\',monospace; font-size:9px;">' + (sp.pct !== null ? sp.pct + '% (' + sp.correct + '/' + sp.attempts + ')' : 'untested') + '</div>';
+          if(sp.note){
+            const noteEl = document.createElement('div');
+            noteEl.style.cssText = 'font-family:\'JetBrains Mono\',monospace; font-size:9px; margin-top:2px; opacity:0.85;';
+            noteEl.textContent = sp.note;
+            chip.appendChild(noteEl);
+          }
+          speedRow.appendChild(chip);
+        });
+        card.appendChild(speedRow);
+      }
+
       track.appendChild(card);
     });
 
