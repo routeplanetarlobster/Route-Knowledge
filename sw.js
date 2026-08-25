@@ -1,7 +1,14 @@
-const CACHE_VERSION = 'route-knowledge-pwa-v1';
+const CACHE_VERSION = 'route-knowledge-pwa-v4';
 const APP_SHELL = [
   './',
   './index.html',
+  './styles.css',
+  './js/app.js',
+  './js/route-data.js',
+  './js/study-data.js',
+  './js/map-data.js',
+  './js/storage.js',
+  './js/progress-sync.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -22,21 +29,8 @@ self.addEventListener('install', event => {
     const cache = await caches.open(CACHE_VERSION);
     await cache.addAll(APP_SHELL);
 
-    // Helpful offline dependencies. Failure of a third-party CDN must never
-    // prevent the PWA itself from installing.
-    const extras = [
-      'https://unpkg.com/maplibre-gl@5.16.0/dist/maplibre-gl.css',
-      'https://unpkg.com/maplibre-gl@5.16.0/dist/maplibre-gl.js',
-      'https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js',
-      'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js',
-      'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js'
-    ];
-    await Promise.allSettled(extras.map(async url => {
-      try{
-        const response = await fetch(url, {mode:'cors'});
-        if(response && response.ok) await cache.put(url, response.clone());
-      }catch(e){}
-    }));
+    // Large optional dependencies are cached on first use. This keeps install
+    // fast while retaining offline access after Map or Account has been opened.
   })());
 });
 
