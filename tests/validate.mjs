@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {TRACK_SPEED_DATA} from '../js/route-data.js';
 import {STUDY_SEGMENTS} from '../js/study-data.js';
-import {applyStatDeltas} from '../js/progress-sync.js';
+import {applyStatDeltas, mergeCoverageStates} from '../js/progress-sync.js';
+import {inferV2CompletedDirections, v2CoverageWitnessKeys} from '../js/coverage-recovery.js';
+import {SPEED_MAP_OPERATIONAL_RESTRICTIONS, applyOperationalRestrictions, effectiveSpeedMarkers} from '../js/map-restrictions.js';
 
 const expectedLines = [
   'belair_down','belair_up','gawler_down','gawler_up','grange_down','grange_up',
@@ -86,6 +88,21 @@ assert.equal(merged[key].correct, 2, 'concurrent correct counts are additive');
 assert.equal(merged[key].box, 1, 'latest scheduling state wins');
 assert.deepEqual(applyStatDeltas(merged, {[key]:{deleted:true,stateAt:50}}), {});
 
+const repairedCoverage = mergeCoverageStates(
+  {belair_down:{complete:true,stateAt:20}, gawler_up:{complete:false,stateAt:30}},
+  {belair_down:{complete:false,stateAt:10}, gawler_up:{complete:true,stateAt:25}, seaford_down:{complete:true,stateAt:15}},
+);
+assert.equal(repairedCoverage.belair_down.complete, true, 'newer local coverage repair wins');
+assert.equal(repairedCoverage.gawler_up.complete, false, 'a newer explicit removal wins');
+assert.equal(repairedCoverage.seaford_down.complete, true, 'cloud-only coverage repair is retained');
+
+const recoveryWitnesses = v2CoverageWitnessKeys('belair_down', TRACK_SPEED_DATA.belair_down, STUDY_SEGMENTS.belair_down);
+assert.ok(recoveryWitnesses.length >= 5, 'v2 recovery has conservative shared-key evidence');
+const completedBelairStats = Object.fromEntries(recoveryWitnesses.map(key => [key, {attempts:1, correct:1}]));
+assert.ok(inferV2CompletedDirections(TRACK_SPEED_DATA, STUDY_SEGMENTS, completedBelairStats).includes('belair_down'), 'a completed v2 direction is recovered automatically');
+delete completedBelairStats[recoveryWitnesses[0]];
+assert.ok(!inferV2CompletedDirections(TRACK_SPEED_DATA, STUDY_SEGMENTS, completedBelairStats).includes('belair_down'), 'partial directions are not marked complete');
+
 const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const app = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
 const worker = fs.readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
@@ -95,8 +112,37 @@ assert.ok(index.includes('aria-modal="true"'), 'dialogs expose modal semantics')
 assert.ok(!app.includes('SEED_DATA'), 'quiz speeds are not duplicated');
 assert.ok(!app.includes('hasClaudeStorage'), 'legacy host storage is removed');
 assert.ok(!/show(?:Network|SpeedMap|Progress|Review|Landing)\s*=/.test(app), 'one active view controls navigation');
-assert.ok(worker.includes("route-knowledge-pwa-v4"), 'service-worker cache is versioned');
-for(const asset of ['styles.css','js/app.js','js/route-data.js','js/study-data.js','js/map-data.js','js/storage.js','js/progress-sync.js']){
+assert.ok(worker.includes("route-knowledge-pwa-v13"), 'service-worker cache is versioned');
+const adelaideYard = SPEED_MAP_OPERATIONAL_RESTRICTIONS.find(item => item.id === 'adelaide-yard-35');
+assert.deepEqual(
+  {lines:adelaideYard.lines, directions:adelaideYard.directions, fromKm:adelaideYard.fromKm, toKm:adelaideYard.toKm, speed:adelaideYard.speed},
+  {lines:['gawler','outer_harbor','grange','port_dock'], directions:['down','up'], fromKm:0.633, toKm:1.380, speed:35},
+  'only the supplied Adelaide Yard restriction is represented on the GM and OM corridors'
+);
+const restrictedDown = applyOperationalRestrictions([{speed:60,startKm:0.5,endKm:1.5,lo:0.5,hi:1.5}], 'gawler', 'down');
+assert.deepEqual(restrictedDown.map(item => [item.lo,item.hi,item.speed]), [[0.5,0.633,60],[0.633,1.38,35],[1.38,1.5,60]], 'the operational cap splits a Down interval exactly');
+assert.deepEqual(effectiveSpeedMarkers(restrictedDown).map(item => [item.plotKm,item.speed]), [[0.5,60],[0.633,35],[1.38,60]], 'number bubbles follow effective Down speed boundaries');
+const lowerSetSpeed = applyOperationalRestrictions([{speed:15,startKm:0.5,endKm:1.0,lo:0.5,hi:1.0}], 'outer_harbor', 'down');
+assert.ok(lowerSetSpeed.every(item => item.speed === 15), 'the 35 km/h cap never raises a lower set speed');
+const restrictedUp = applyOperationalRestrictions([{speed:60,startKm:1.5,endKm:0.5,lo:0.5,hi:1.5}], 'port_dock', 'up');
+assert.deepEqual(restrictedUp.map(item => [item.startKm,item.endKm,item.speed]), [[1.5,1.38,60],[1.38,0.633,35],[0.633,0.5,60]], 'the operational cap preserves Up travel order');
+assert.deepEqual(effectiveSpeedMarkers(restrictedUp).map(item => [item.plotKm,item.speed]), [[1.5,60],[1.38,35],[0.633,60]], 'number bubbles follow effective Up speed boundaries');
+assert.deepEqual(effectiveSpeedMarkers([
+  {speed:35,startKm:1.5,endKm:1.0},{speed:35,startKm:1.0,endKm:0.5}
+]).map(item => [item.plotKm,item.speed]), [[1.5,35]], 'masked permanent boundaries do not create duplicate bubbles');
+assert.equal(applyOperationalRestrictions([{speed:60,startKm:0.5,endKm:1.5,lo:0.5,hi:1.5}], 'seaford', 'down')[0].speed, 60, 'Seaford is not affected by the GM and OM restriction');
+assert.ok(app.includes('recoverCoverageAutomatically'), 'coverage recovery runs without manual input');
+assert.ok(!app.includes('Repair coverage'), 'manual coverage repair is not required');
+assert.ok(app.includes("role:'trunk', name:'Outer Harbor Line'"), 'Outer Harbor is the parent corridor in Network Overview');
+assert.ok(app.includes("role:'trunk', name:'Seaford Line'"), 'Seaford is the parent corridor in Network Overview');
+assert.ok(app.includes('renderQuizSummary'), 'completed range quizzes render a summary');
+assert.ok(app.includes("retryBtn.textContent = 'Retry '"), 'quiz summary offers mistake-only retry');
+assert.ok(app.includes('rk-answer-comparison'), 'mistakes separate the entered and correct speeds');
+assert.ok(app.includes('rk-summary-review-head'), 'mistake review has a distinct readable heading');
+assert.ok(app.includes("summary.classList.add('is-perfect')"), 'perfect summaries expose a compact completion state');
+assert.ok(app.includes('row.replaceChildren(makeResultChip())'), 'range quiz answers update without rebuilding the whole page');
+assert.ok(app.includes("input.enterKeyHint = Number(row.dataset.order) === totalBoxes - 1 ? 'done' : 'next'"), 'mobile keyboards expose next and done actions');
+for(const asset of ['styles.css','js/app.js','js/route-data.js','js/study-data.js','js/map-data.js','js/map-restrictions.js','js/storage.js','js/progress-sync.js','js/coverage-recovery.js']){
   assert.ok(worker.includes(`'./${asset}'`), `${asset} is in the app shell`);
 }
 
