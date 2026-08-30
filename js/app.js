@@ -1,8 +1,10 @@
 import { ROUTE_DATA_VERSION, TRACK_SPEED_DATA, TRACK_SPEED_GROUPS } from './route-data.js';
 import { STUDY_SEGMENTS } from './study-data.js';
 import { SPEED_MAP_LINES, SPEED_MAP_META, SPEED_MAP_ANCHORS, SPEED_MAP_ORDER, SPEED_MAP_ADELAIDE_15_REFERENCE, SPEED_MAP_ADELAIDE_15_CACHE } from './map-data.js';
+import { applyOperationalRestrictions, effectiveSpeedMarkers } from './map-restrictions.js';
 import { storageAdapter } from './storage.js';
-import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
+import { applyStatDeltas, mergePendingBatches, mergeCoverageStates } from './progress-sync.js';
+import { inferV2CompletedDirections } from './coverage-recovery.js';
 
 (function(){
   const LINES = [
@@ -31,10 +33,14 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
   let quizRangeHintUsed = false; // one hint per whole line quiz session
   let quizRangeHintActive = null; // { pairKey, index } of the box currently showing the hint choice, or null
   let quizRangeHintFlag = {}; // pairKey -> array of booleans (was this specific box resolved via hint?)
+  let quizRetryKeys = null; // Set of pair/index keys when retrying only mistakes
   let mysteryRound = null; // { lineId, lineLabel, fromLabel, toLabel, values: [{value,note,boxFrom,boxTo}], guesses: [], checked: [] }
   let statsData = {}; // statKey -> { attempts, correct, lastAt }
   let statsReconciled = false; // prune saved review keys that no longer exist after route-data updates
   let statsLoaded = false;
+  let coverageState = {}; // lineId -> { complete, stateAt }; independent from accuracy
+  let coverageLoaded = false;
+  let coverageAutoRecoveryChecked = false;
   let activeView = 'home';
   let focusRound = null; // [{ lineId, lineLabel, from, to, value, note, key }]
   let focusGuesses = [];
@@ -191,17 +197,19 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
 
   const NETWORK_TREE = [
     { type:'line', name:'Gawler Line', lineId:'gawler_down' },
-    { type:'junction', name:'Woodville', children: [
-        { type:'line', name:'Grange Line', lineId:'grange_down' },
+    { type:'line', role:'trunk', name:'Outer Harbor Line', lineId:'outerharbor_down', children: [
+        { type:'junction', name:'Woodville', children: [
+            { type:'line', name:'Grange Line', lineId:'grange_down' },
+        ]},
         { type:'junction', name:'Alberton', children: [
             { type:'line', name:'Port Dock Line', lineId:'portdock_down' },
-            { type:'line', name:'Outer Harbor Line', lineId:'outerharbor_down' },
         ]},
     ]},
-    { type:'junction', name:'Goodwood', children: [
-        { type:'line', name:'Belair Line', lineId:'belair_down' },
-        { type:'junction', name:'just before Ascot Park', children: [
-            { type:'line', name:'Seaford Line', lineId:'seaford_down' },
+    { type:'line', role:'trunk', name:'Seaford Line', lineId:'seaford_down', children: [
+        { type:'junction', name:'Goodwood', children: [
+            { type:'line', name:'Belair Line', lineId:'belair_down' },
+        ]},
+        { type:'junction', name:'Tonsley (before Ascot Park)', children: [
             { type:'line', name:'Flinders Line', lineId:'tonsley_down' },
         ]},
     ]},
@@ -357,6 +365,8 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
       const heatColor = stat ? accuracyColor(stat.pct) : null;
       const btn = document.createElement('button');
       btn.className = 'rk-net-line-btn';
+      if(node.role === 'trunk') btn.classList.add('rk-net-trunk-btn');
+      btn.style.setProperty('--line-hue', lineColor(node.lineId));
       btn.style.borderLeftColor = heatColor || lineColor(node.lineId);
       btn.style.display = 'flex';
       btn.style.alignItems = 'center';
@@ -701,6 +711,70 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
     }
     await reconcileStatsWithCurrentData();
   }
+  async function loadCoverageIfNeeded(){
+    if(coverageLoaded) return;
+    try{
+      const res = await storageAdapter.get('coverage:v1', false);
+      const parsed = res && res.value ? JSON.parse(res.value) : {};
+      coverageState = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    }catch(e){ coverageState = {}; }
+    coverageLoaded = true;
+  }
+  async function writeLocalCoverageState(state){
+    coverageState = state && typeof state === 'object' && !Array.isArray(state) ? state : {};
+    coverageLoaded = true;
+    await storageAdapter.set('coverage:v1', JSON.stringify(coverageState), false);
+  }
+  function parseCloudCoverage(data){
+    try{
+      const parsed = data && data.coverageStateJson ? JSON.parse(data.coverageStateJson) : {};
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    }catch(e){ return {}; }
+  }
+  async function syncCoverageState(){
+    await loadCoverageIfNeeded();
+    const ref = cloudProgressRef();
+    if(!ref) return true;
+    setCloudSyncState('syncing');
+    try{
+      let merged = coverageState;
+      await firestoreDb.runTransaction(async transaction => {
+        const snap = await transaction.get(ref);
+        merged = mergeCoverageStates(coverageState, snap.exists ? parseCloudCoverage(snap.data()) : {});
+        transaction.set(ref, {
+          coverageStateJson: JSON.stringify(merged),
+          coverageUpdatedAtMs: Date.now(),
+          updatedAt: firebaseSdk.firestore.FieldValue.serverTimestamp(),
+          schemaVersion: 3,
+        }, {merge:true});
+      });
+      await writeLocalCoverageState(merged);
+      setCloudSyncState('synced');
+      return true;
+    }catch(e){
+      console.error('Coverage sync failed', e);
+      setCloudSyncState('error');
+      return false;
+    }
+  }
+  async function recoverCoverageAutomatically(){
+    if(coverageAutoRecoveryChecked) return;
+    coverageAutoRecoveryChecked = true;
+    const recovered = inferV2CompletedDirections(TRACK_SPEED_DATA, STUDY_SEGMENTS, statsData);
+    if(recovered.length === 0) return;
+    const stateAt = Date.now();
+    let changed = false;
+    recovered.forEach(lineId => {
+      if(!coverageState[lineId] || !coverageState[lineId].complete){
+        coverageState[lineId] = {complete:true, stateAt};
+        changed = true;
+      }
+    });
+    if(changed){
+      await writeLocalCoverageState(coverageState);
+      await syncCoverageState();
+    }
+  }
   let saveStatsTimer = null;
   function saveStats(){
     // Local-first save: quizzes keep working even if reception drops out.
@@ -814,11 +888,13 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
 
   async function exportAllData(){
     await loadStatsIfNeeded();
+    await loadCoverageIfNeeded();
     const payload = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       exportedAt: new Date().toISOString(),
       tool: 'Adelaide Metro Route Knowledge',
       stats: statsData,
+      coverageState,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -852,7 +928,10 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
       await reconcileStatsWithCurrentData();
       const stamp = Date.now();
       await writeLocalStatsSnapshot(statsData, stamp);
+      const importedCoverage = parsed && parsed.coverageState && typeof parsed.coverageState === 'object' ? parsed.coverageState : {};
+      await writeLocalCoverageState(importedCoverage);
       scheduleCloudStatsSave(statsData, stamp);
+      syncCoverageState();
       alert('Progress imported successfully.');
       renderBody();
     }catch(err){
@@ -993,7 +1072,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
       if(hi<=lo)continue;
       out.push({speed:cur.speed,startKm:cur.plotKm,endKm,lo,hi,comment:cur.comment||null,row:cur,approximate:cur.approximate,mapReference:cur.mapReference||null});
     }
-    return out;
+    return applyOperationalRestrictions(out,line,dir);
   }
   function speedMapIntervalAt(km){
     const intervals=speedMapIntervals();
@@ -1045,7 +1124,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
     shell.appendChild(toolbar);
 
     const mapWrap=document.createElement('div');mapWrap.className='rk-sm-map-wrap';
-    mapWrap.innerHTML='<div id="rk-speed-map-map"></div><div class="rk-sm-source">Exact km where stated · Adelaide 15 km/h boundary aligned to Morphett Street bridge</div><div class="rk-sm-legend"><div class="rk-sm-legend-head"><span>Permanent speed</span><span>km/h</span></div><div class="rk-sm-gradient"></div><div class="rk-sm-legend-scale"><span>5</span><span>35</span><span>60</span><span>85</span><span>110</span></div><div class="rk-sm-legend-note">Speeds without a stated kilometrage keep their source order and use a dashed, interpolated map position.</div></div><div class="rk-sm-info hidden" id="rk-sm-info"><button class="rk-sm-close" id="rk-sm-info-close" type="button">×</button><div id="rk-sm-info-content"></div></div>';
+    mapWrap.innerHTML='<div id="rk-speed-map-map"></div><div class="rk-sm-source">Set speeds with current Adelaide Yard restriction · Exact km where stated</div><div class="rk-sm-legend"><div class="rk-sm-legend-head"><span>Applicable speed</span><span>km/h</span></div><div class="rk-sm-gradient"></div><div class="rk-sm-legend-scale"><span>5</span><span>35</span><span>60</span><span>85</span><span>110</span></div><div class="rk-sm-legend-note">Gawler, Outer Harbor, Grange and Port Dock include the 35 km/h Adelaide Yard restriction from km 0.633 to 1.380, Down and Up. Lower set speeds still apply. Other temporary restrictions are not shown.</div></div><div class="rk-sm-info hidden" id="rk-sm-info"><button class="rk-sm-close" id="rk-sm-info-close" type="button">×</button><div id="rk-sm-info-content"></div></div>';
     shell.appendChild(mapWrap);bodyEl.appendChild(shell);
 
     if(typeof maplibregl==='undefined'){
@@ -1127,6 +1206,10 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
         html+='<div class="rk-sm-stat"><span class="k">Speed applies</span><span class="v">'+(interval.approximate?'approx. ':'')+'km '+Number(interval.startKm).toFixed(3)+dirArrow+Number(interval.endKm).toFixed(3)+'</span></div>';
         if(interval.mapReference)html+='<div class="rk-sm-comment">Map position aligned to '+escapeHtml(interval.mapReference)+' for the Adelaide Station 15 km/h boundary. The source kilometrage remains unchanged.</div>';
         else if(interval.approximate)html+='<div class="rk-sm-comment">Approximate map position only — the source gives this speed in sequence but does not state a kilometre value.</div>';
+        if(interval.operationalRestriction||interval.restrictionBoundary){
+          const restriction=interval.operationalRestriction||interval.restrictionBoundary;
+          html+='<div class="rk-sm-comment"><strong>Operational restriction:</strong> maximum '+restriction.speed+' km/h from km '+restriction.fromKm.toFixed(3)+' to '+restriction.toKm.toFixed(3)+' (Down &amp; Up), '+escapeHtml(restriction.location)+'. '+escapeHtml(restriction.source)+'. Set addenda speeds and quizzes are unchanged.</div>';
+        }
         if(interval.comment)html+='<div class="rk-sm-comment">'+escapeHtml(interval.comment)+'</div>';
       }else html+='<div class="rk-sm-speed-big" style="color:#9aa5ba">— <small>no exact plotted speed</small></div>';
       if(named.before)html+='<div class="rk-sm-stat"><span class="k">Previous point</span><span class="v">'+escapeHtml(named.before.label)+' · km '+named.before.km.toFixed(3)+'</span></div>';
@@ -1137,14 +1220,14 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
     function renderLabels(){
       clearMarkers();
       const z=map.getZoom(),range=SPEED_MAP_META[speedMapLine].range;
-      speedMapPositionedRows().forEach(r=>{
+      effectiveSpeedMarkers(speedMapIntervals()).forEach(r=>{
         if(r.plotKm===null||r.plotKm<range[0]||r.plotKm>range[1])return;
         const c=speedMapCoordAtOfficial(r.plotKm),el=document.createElement('div');
         el.className='rk-sm-speed-marker'+(r.approximate?' approx':'');
         el.style.background=speedMapColor(r.speed);el.textContent=r.speed;
-        const markerLocation=r.mapReference?(r.mapReference+' map reference'):(r.approximate?'approx. position (source km not stated)':'km '+r.km.toFixed(3));
+        const markerLocation=r.mapReference?(r.mapReference+' map reference'):(r.approximate?'approx. position (source km not stated)':'km '+Number(r.plotKm).toFixed(3));
         el.title=r.speed+' km/h · '+markerLocation+(r.comment?' · '+r.comment:'');
-        el.addEventListener('click',ev=>{ev.stopPropagation();showInfo({lat:c[0],lng:c[1]});});
+        el.addEventListener('click',ev=>{ev.stopPropagation();showInfo({lat:c[0],lng:c[1]},r);});
         const marker=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(toLngLat(c)).addTo(map);mapMarkers.push(marker);
       });
       speedMapRows().forEach(r=>{
@@ -1422,6 +1505,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
     statsData = safeStats;
     statsLoaded = true;
     statsReconciled = false;
+    coverageAutoRecoveryChecked = false;
   }
 
   function cloudProgressRef(){
@@ -1436,14 +1520,17 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
   async function uploadStatsSnapshot(stats, updatedAtMs){
     const ref = cloudProgressRef();
     if(!ref) return false;
+    await loadCoverageIfNeeded();
     const stamp = updatedAtMs || Date.now();
     setCloudSyncState('syncing');
     try{
       await ref.set({
         statsJson: JSON.stringify(stats || {}),
+        coverageStateJson: JSON.stringify(coverageState),
+        coverageUpdatedAtMs: stamp,
         updatedAtMs: stamp,
         updatedAt: firebaseSdk.firestore.FieldValue.serverTimestamp(),
-        schemaVersion: 2
+        schemaVersion: 3
       }, {merge:true});
       pendingStatDeltas = {};
       persistPendingStatDeltas();
@@ -1481,7 +1568,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
           statsJson: JSON.stringify(cloud),
           updatedAtMs: stamp,
           updatedAt: firebaseSdk.firestore.FieldValue.serverTimestamp(),
-          schemaVersion: 2
+          schemaVersion: 3
         }, {merge:true});
       });
       setCloudSyncState('synced');
@@ -1496,11 +1583,11 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
 
   async function getCloudStatsSnapshot(){
     const ref = cloudProgressRef();
-    if(!ref) return {exists:false, stats:{}, updatedAtMs:0};
+    if(!ref) return {exists:false, stats:{}, coverageState:{}, updatedAtMs:0};
     const snap = await ref.get();
-    if(!snap.exists) return {exists:false, stats:{}, updatedAtMs:0};
+    if(!snap.exists) return {exists:false, stats:{}, coverageState:{}, updatedAtMs:0};
     const data = snap.data() || {};
-    return {exists:true, stats:parseCloudStats(data), updatedAtMs:Number(data.updatedAtMs || 0)};
+    return {exists:true, stats:parseCloudStats(data), coverageState:parseCloudCoverage(data), updatedAtMs:Number(data.updatedAtMs || 0)};
   }
 
   async function saveProfile(){
@@ -1522,6 +1609,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
     try{
       const uid = currentFirebaseUser.uid;
       const associatedUid = localStorage.getItem('rk:cloudUid');
+      await loadCoverageIfNeeded();
       let local = await getLocalStatsSnapshot();
       let cloud = await getCloudStatsSnapshot();
       const localAttempts = statsAttemptCount(local.stats);
@@ -1561,6 +1649,10 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
         if(choice === 'primary') await writeLocalStatsSnapshot(cloud.stats, cloud.updatedAtMs || Date.now());
         else await uploadStatsSnapshot(local.stats, local.updatedAtMs || Date.now());
       }
+
+      coverageState = mergeCoverageStates(coverageState, cloud.coverageState || {});
+      await writeLocalCoverageState(coverageState);
+      await syncCoverageState();
 
       localStorage.setItem('rk:cloudUid', uid);
       await saveProfile();
@@ -1761,6 +1853,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
     quizRangeHintUsed = false;
     quizRangeHintActive = null;
     quizRangeHintFlag = {};
+    quizRetryKeys = null;
   }
 
   function renderNav(){
@@ -1874,6 +1967,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
       rangeQuizBtn.style.opacity = rangeQuizBtn.disabled ? '0.4' : '1';
       rangeQuizBtn.onclick = () => {
         quizRangeGuesses = {}; quizRangeBoxChecked = {};
+        quizRetryKeys = null;
         quizModeType = 'range';
         renderBody();
       };
@@ -2397,14 +2491,26 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
   // How much of the whole loaded network you've actually attempted at least once,
   // separate from how well you're doing on the parts you have tried.
   async function computeCoverage(){
+    await loadCoverageIfNeeded();
+    await recoverCoverageAutomatically();
     let totalBoxes = 0;
+    let attemptedCount = 0;
+    const perLine = [];
     for(const line of LINES){
       const segs = await loadSegments(line.id);
       const pairs = computeRangePairs(segs);
-      pairs.forEach(pair => { totalBoxes += pair.speeds.length; });
+      const keys = [];
+      pairs.forEach(pair => {
+        pair.speeds.forEach((sp, i) => keys.push(statKey(line.id, pair.from, pair.to, i)));
+      });
+      const actualAttempted = keys.filter(key => Number(statsData[key] && statsData[key].attempts || 0) >= 1).length;
+      const repairedComplete = Boolean(coverageState[line.id] && coverageState[line.id].complete);
+      const countedAttempted = repairedComplete ? keys.length : actualAttempted;
+      totalBoxes += keys.length;
+      attemptedCount += countedAttempted;
+      perLine.push({line, totalBoxes:keys.length, actualAttempted, countedAttempted, repairedComplete});
     }
-    const attemptedCount = Object.values(statsData).filter(s => s.attempts >= 1).length;
-    return { totalBoxes, attemptedCount };
+    return { totalBoxes, attemptedCount, perLine };
   }
 
   async function renderLanding(){
@@ -2524,7 +2630,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
 
       const textCol = document.createElement('div');
       textCol.innerHTML = '<p style="font-family:\'JetBrains Mono\',monospace; font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted); margin:0 0 4px;">Network coverage</p>' +
-        '<p style="font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--muted); margin:0;">' + coverage.attemptedCount + ' of ' + coverage.totalBoxes + ' speed changes attempted at least once</p>';
+        '<p style="font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--muted); margin:0;">' + coverage.attemptedCount + ' of ' + coverage.totalBoxes + ' speed changes covered</p>';
       coverageCard.appendChild(textCol);
 
       wrap.appendChild(coverageCard);
@@ -3622,6 +3728,143 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
     }
   }
 
+  function quizRetryKey(pairKey, index){ return pairKey + '::' + index; }
+
+  function quizVisiblePairs(pairs){
+    return pairs.map(pair => ({
+      pair,
+      items: pair.speeds.map((sp, index) => ({sp, index, key:quizRetryKey(pair.key, index)}))
+        .filter(item => !quizRetryKeys || quizRetryKeys.has(item.key)),
+    })).filter(group => group.items.length > 0);
+  }
+
+  function quizItemCorrect(pair, item){
+    const guess = quizRangeGuesses[pair.key][item.index];
+    return !quizRangeHintFlag[pair.key][item.index] && guess !== '' && guess !== undefined && Number(guess) === Number(item.sp.value);
+  }
+
+  function renderQuizSummary(visiblePairs, line){
+    const allItems = visiblePairs.flatMap(group => group.items.map(item => ({pair:group.pair, ...item})));
+    const correctItems = allItems.filter(item => quizItemCorrect(item.pair, item));
+    const mistakes = allItems.filter(item => !quizItemCorrect(item.pair, item));
+    const hintCount = allItems.filter(item => quizRangeHintFlag[item.pair.key][item.index]).length;
+    const pct = allItems.length ? Math.round((correctItems.length / allItems.length) * 100) : 0;
+
+    const summary = document.createElement('section');
+    summary.className = 'rk-quiz-done rk-quiz-summary';
+    if(mistakes.length === 0) summary.classList.add('is-perfect');
+    summary.setAttribute('aria-labelledby', 'rk-quiz-summary-title');
+    const hero = document.createElement('div');
+    hero.className = 'rk-summary-hero';
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'rk-form-title';
+    eyebrow.textContent = quizRetryKeys ? 'Mistake retry complete' : line.name + ' — ' + line.direction;
+    hero.appendChild(eyebrow);
+    const title = document.createElement('h2');
+    title.id = 'rk-quiz-summary-title';
+    title.textContent = mistakes.length === 0 ? 'Quiz complete — excellent work' : 'Quiz complete';
+    hero.appendChild(title);
+    const score = document.createElement('div');
+    score.className = 'score';
+    score.setAttribute('aria-label', pct + ' percent correct');
+    score.innerHTML = '<strong>' + pct + '%</strong><span>final score</span>';
+    hero.appendChild(score);
+    summary.appendChild(hero);
+
+    const metrics = document.createElement('div');
+    metrics.className = 'rk-summary-metrics';
+    [
+      {value:correctItems.length + ' / ' + allItems.length, label:'Correct'},
+      {value:String(mistakes.length), label:'To retry'},
+      {value:String(hintCount), label:'Hints used'},
+    ].forEach(metric => {
+      const card = document.createElement('div');
+      card.className = 'rk-summary-metric';
+      card.setAttribute('aria-label', metric.label + ': ' + metric.value);
+      card.innerHTML = '<strong>' + metric.value + '</strong><span>' + metric.label + '</span>';
+      metrics.appendChild(card);
+    });
+    summary.appendChild(metrics);
+
+    if(mistakes.length > 0){
+      const reviewHead = document.createElement('div');
+      reviewHead.className = 'rk-summary-review-head';
+      reviewHead.innerHTML = '<h3>Review ' + mistakes.length + ' mistake' + (mistakes.length === 1 ? '' : 's') + '</h3>' +
+        '<p>Compare your entry with the correct speed before retrying.</p>';
+      summary.appendChild(reviewHead);
+      const mistakeList = document.createElement('div');
+      mistakeList.className = 'rk-summary-list';
+      mistakes.forEach((item, mistakeIndex) => {
+        const guess = quizRangeGuesses[item.pair.key][item.index];
+        const usedHint = quizRangeHintFlag[item.pair.key][item.index];
+        const row = document.createElement('div');
+        row.className = 'rk-summary-row';
+        row.setAttribute('aria-label', 'Mistake ' + (mistakeIndex + 1) + ' of ' + mistakes.length);
+        const context = document.createElement('div');
+        context.className = 'rk-summary-context';
+        context.innerHTML = '<strong>' + escapeHtml(item.pair.from) + ' → ' + escapeHtml(item.pair.to) + '</strong>' +
+          '<span>Speed ' + (item.index + 1) + ' of ' + item.pair.speeds.length + (item.sp.note ? ' · ' + escapeHtml(item.sp.note) : '') + '</span>';
+        const answer = document.createElement('div');
+        answer.className = 'rk-answer-comparison';
+        const yourAnswer = document.createElement('div');
+        yourAnswer.className = 'rk-answer-box wrong';
+        yourAnswer.innerHTML = '<span>' + (usedHint ? 'Hint used' : 'Your answer') + '</span>' +
+          '<strong>' + (guess ? escapeHtml(guess) + ' km/h' : 'No answer') + '</strong>';
+        const correctAnswer = document.createElement('div');
+        correctAnswer.className = 'rk-answer-box correct';
+        correctAnswer.innerHTML = '<span>Correct speed</span><strong>' + escapeHtml(item.sp.value) + ' km/h</strong>';
+        answer.appendChild(yourAnswer);
+        answer.appendChild(correctAnswer);
+        row.appendChild(context);
+        row.appendChild(answer);
+        mistakeList.appendChild(row);
+      });
+      summary.appendChild(mistakeList);
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'rk-action-row rk-summary-actions';
+    if(mistakes.length > 0){
+      const retryBtn = document.createElement('button');
+      retryBtn.className = 'rk-btn primary';
+      retryBtn.textContent = 'Retry ' + mistakes.length + ' mistake' + (mistakes.length === 1 ? '' : 's');
+      retryBtn.onclick = () => {
+        quizRetryKeys = new Set(mistakes.map(item => item.key));
+        mistakes.forEach(item => {
+          quizRangeGuesses[item.pair.key][item.index] = '';
+          quizRangeBoxChecked[item.pair.key][item.index] = false;
+          quizRangeRecorded[item.pair.key][item.index] = false;
+          quizRangeHintFlag[item.pair.key][item.index] = false;
+        });
+        quizRangeHintUsed = false;
+        quizRangeHintActive = null;
+        renderBody();
+      };
+      actions.appendChild(retryBtn);
+    }
+    const restartBtn = document.createElement('button');
+    restartBtn.className = 'rk-btn';
+    restartBtn.textContent = 'Restart full quiz';
+    restartBtn.onclick = () => {
+      quizRangeGuesses = {};
+      quizRangeBoxChecked = {};
+      quizRangeRecorded = {};
+      quizRangeHintUsed = false;
+      quizRangeHintActive = null;
+      quizRangeHintFlag = {};
+      quizRetryKeys = null;
+      renderBody();
+    };
+    actions.appendChild(restartBtn);
+    const exitBtn = document.createElement('button');
+    exitBtn.className = 'rk-btn';
+    exitBtn.textContent = 'Back to line';
+    exitBtn.onclick = () => { exitQuiz(); renderBody(); };
+    actions.appendChild(exitBtn);
+    summary.appendChild(actions);
+    bodyEl.appendChild(summary);
+  }
+
   function renderQuizRange(segs, line){
     const pairs = computeRangePairs(segs);
     if(pairs.length === 0){
@@ -3649,32 +3892,52 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
       }
     });
 
+    const visiblePairs = quizVisiblePairs(pairs);
     let totalBoxes = 0, checkedBoxes = 0, correctBoxes = 0;
-    pairs.forEach(pair => {
-      pair.speeds.forEach((sp, i) => {
+    visiblePairs.forEach(({pair, items}) => {
+      items.forEach(item => {
+        const i = item.index;
         totalBoxes++;
         if(quizRangeBoxChecked[pair.key][i]){
           checkedBoxes++;
-          const g = quizRangeGuesses[pair.key][i];
-          if(g !== '' && g !== undefined && Number(g) === Number(sp.value)) correctBoxes++;
+          if(quizItemCorrect(pair, item)) correctBoxes++;
         }
       });
     });
 
+    if(totalBoxes > 0 && checkedBoxes === totalBoxes){
+      renderQuizSummary(visiblePairs, line);
+      return;
+    }
+
     const bar = document.createElement('div');
     bar.className = 'rk-quizbar';
-    if(checkedBoxes === 0){
-      bar.innerHTML = '<span>Type a speed and tab/enter to check it instantly</span><span>' + totalBoxes + ' blanks</span>';
-    } else {
-      bar.innerHTML = '<span>Checked ' + checkedBoxes + ' / ' + totalBoxes + '</span><span>Correct: <b>' + correctBoxes + '</b></span>';
-    }
+    const updateQuizBar = () => {
+      let checked = 0;
+      let correct = 0;
+      visiblePairs.forEach(({pair, items}) => {
+        items.forEach(item => {
+          if(quizRangeBoxChecked[pair.key][item.index]){
+            checked++;
+            if(quizItemCorrect(pair, item)) correct++;
+          }
+        });
+      });
+      if(checked === 0){
+        bar.innerHTML = '<span>Type a speed and tab/enter to check it instantly</span><span>' + totalBoxes + ' blanks</span>';
+      } else {
+        bar.innerHTML = '<span>Checked ' + checked + ' / ' + totalBoxes + '</span><span>Correct: <b>' + correct + '</b></span>';
+      }
+      return {checked, correct};
+    };
+    updateQuizBar();
     bodyEl.appendChild(bar);
 
     const track = document.createElement('div');
     track.className = 'rk-track';
 
     let rkBoxOrder = 0;
-    pairs.forEach(pair => {
+    visiblePairs.forEach(({pair, items}) => {
       const card = document.createElement('div');
       card.className = 'rk-seg';
 
@@ -3689,7 +3952,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
       left.appendChild(stations);
       const hint = document.createElement('div');
       hint.className = 'rk-tags';
-      hint.appendChild(makeTag(pair.speeds.length + ' speed change' + (pair.speeds.length===1?'':'s')));
+      hint.appendChild(makeTag(items.length + (quizRetryKeys ? ' mistake' : ' speed change') + (items.length===1?'':'s')));
       left.appendChild(hint);
       top.appendChild(left);
       card.appendChild(top);
@@ -3697,11 +3960,38 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
       const boxCol = document.createElement('div');
       boxCol.style.cssText = 'display:flex; flex-direction:column; gap:6px; margin-top:10px; max-width:260px;';
 
-      pair.speeds.forEach((sp, i) => {
+      items.forEach(({sp, index:i}) => {
         const isChecked = quizRangeBoxChecked[pair.key][i];
         const row = document.createElement('div');
         row.style.cssText = 'display:flex; align-items:center; gap:8px; flex-wrap:wrap;';
         row.dataset.order = rkBoxOrder++;
+
+        const makeResultChip = () => {
+          const guess = quizRangeGuesses[pair.key][i];
+          const wasHint = quizRangeHintFlag[pair.key][i];
+          const boxCorrect = guess !== '' && guess !== undefined && Number(guess) === Number(sp.value);
+          const chip = document.createElement('div');
+          chip.className = 'rk-board';
+          chip.style.width = '140px';
+          chip.style.cursor = 'pointer';
+          chip.title = 'Click to try this one again';
+          chip.style.background = boxCorrect ? 'var(--green)' : 'var(--red)';
+          chip.style.color = '#0d1410';
+          chip.innerHTML = wasHint
+            ? '* ' + (guess || '\u2014') + ' <span class="u">hint used</span>'
+            : (boxCorrect
+              ? sp.value + '<span class="u">km/h</span>'
+              : (guess || '\u2014') + ' <span class="u">(was ' + sp.value + ')</span>');
+          chip.onclick = () => { quizRangeBoxChecked[pair.key][i] = false; renderBody(); };
+          return chip;
+        };
+
+        const makeNoteLabel = () => {
+          const noteLabel = document.createElement('span');
+          noteLabel.style.cssText = 'font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--yellow); white-space:nowrap;';
+          noteLabel.textContent = sp.note;
+          return noteLabel;
+        };
 
         const hintIsActiveHere = quizRangeHintActive && quizRangeHintActive.pairKey === pair.key && quizRangeHintActive.index === i;
 
@@ -3729,6 +4019,8 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
           input.type = 'text';
           input.inputMode = 'numeric';
           input.pattern = '[0-9]*';
+          input.enterKeyHint = Number(row.dataset.order) === totalBoxes - 1 ? 'done' : 'next';
+          input.autocomplete = 'off';
           input.style.width = '140px';
           input.placeholder = 'speed ' + (i+1);
           input.setAttribute('aria-label', pair.from + ' to ' + pair.to + ', speed ' + (i + 1) + ' in kilometres per hour');
@@ -3739,30 +4031,46 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
             quizRangeGuesses[pair.key][i] = cleaned;
         });
           input.addEventListener('wheel', e => e.preventDefault(), { passive:false });
-          input.addEventListener('blur', () => {
-            if(input.value.trim() !== ''){
-              quizRangeBoxChecked[pair.key][i] = true;
-              const correct = Number(input.value) === Number(sp.value);
-              const isFirstAttempt = !quizRangeRecorded[pair.key][i];
-              const myOrder = Number(row.dataset.order);
+          let answerCommitted = false;
+          const commitAnswer = () => {
+            const value = input.value.trim();
+            if(answerCommitted || value === '') return;
+            answerCommitted = true;
+            quizRangeGuesses[pair.key][i] = value;
+            quizRangeBoxChecked[pair.key][i] = true;
+            const correct = Number(value) === Number(sp.value);
+            const isFirstAttempt = !quizRangeRecorded[pair.key][i];
+            const myOrder = Number(row.dataset.order);
+            const nextRow = bodyEl.querySelector('[data-order="' + (myOrder + 1) + '"]');
+            const nextInput = nextRow ? nextRow.querySelector('.rk-input') : null;
+
+            row.replaceChildren(makeResultChip());
+            if(sp.note) row.appendChild(makeNoteLabel());
+            const progress = updateQuizBar();
+
+            if(progress.checked === totalBoxes){
               renderBody();
-              setTimeout(() => {
-                const nextRow = bodyEl.querySelector('[data-order="' + (myOrder + 1) + '"]');
-                const nextInput = nextRow ? nextRow.querySelector('.rk-input') : null;
-                if(nextInput) nextInput.focus();
-              }, 30);
-              if(isFirstAttempt){
-                quizRangeRecorded[pair.key][i] = true;
-                recordAttempt(statKey(line.id, pair.from, pair.to, i), correct).then(() => {
-                  if(quizRangeBoxChecked[pair.key].every(Boolean)){
-                    const stretchItems = pair.speeds.map((s, j) => ({ value: s.value, pairFrom: pair.from, pairTo: pair.to, pairIndex: j }));
-                    evaluateStretchOutcome(line.id, stretchItems, quizRangeGuesses[pair.key]);
-                  }
-                });
-              }
+            } else if(nextInput){
+              nextInput.focus();
+            }
+
+            if(isFirstAttempt){
+              quizRangeRecorded[pair.key][i] = true;
+              recordAttempt(statKey(line.id, pair.from, pair.to, i), correct).then(() => {
+                if(quizRangeBoxChecked[pair.key].every(Boolean)){
+                  const stretchItems = pair.speeds.map((s, j) => ({ value: s.value, pairFrom: pair.from, pairTo: pair.to, pairIndex: j }));
+                  evaluateStretchOutcome(line.id, stretchItems, quizRangeGuesses[pair.key]);
+                }
+              });
+            }
+          };
+          input.addEventListener('blur', commitAnswer);
+          input.addEventListener('keydown', e => {
+            if(e.key === 'Enter'){
+              e.preventDefault();
+              commitAnswer();
             }
           });
-          input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
           row.appendChild(input);
           if(!quizRangeHintUsed){
             const hintBtn = document.createElement('button');
@@ -3777,30 +4085,11 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
             row.appendChild(hintBtn);
           }
         } else {
-          const guess = quizRangeGuesses[pair.key][i];
-          const wasHint = quizRangeHintFlag[pair.key][i];
-          const boxCorrect = guess !== '' && guess !== undefined && Number(guess) === Number(sp.value);
-          const chip = document.createElement('div');
-          chip.className = 'rk-board';
-          chip.style.width = '140px';
-          chip.style.cursor = 'pointer';
-          chip.title = 'Click to try this one again';
-          chip.style.background = boxCorrect ? 'var(--green)' : 'var(--red)';
-          chip.style.color = '#0d1410';
-          chip.innerHTML = wasHint
-            ? '* ' + (guess || '\u2014') + ' <span class="u">hint used</span>'
-            : (boxCorrect
-              ? sp.value + '<span class="u">km/h</span>'
-              : (guess || '\u2014') + ' <span class="u">(was ' + sp.value + ')</span>');
-          chip.onclick = () => { quizRangeBoxChecked[pair.key][i] = false; renderBody(); };
-          row.appendChild(chip);
+          row.appendChild(makeResultChip());
         }
 
         if(sp.note){
-          const noteLabel = document.createElement('span');
-          noteLabel.style.cssText = 'font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--yellow); white-space:nowrap;';
-          noteLabel.textContent = sp.note;
-          row.appendChild(noteLabel);
+          row.appendChild(makeNoteLabel());
         }
 
         boxCol.appendChild(row);
@@ -3818,7 +4107,7 @@ import { applyStatDeltas, mergePendingBatches } from './progress-sync.js';
     const resetBtn = document.createElement('button');
     resetBtn.className = 'rk-btn primary';
     resetBtn.textContent = 'Reset Quiz';
-    resetBtn.onclick = () => { quizRangeGuesses = {}; quizRangeBoxChecked = {}; quizRangeRecorded = {}; quizRangeHintUsed = false; quizRangeHintActive = null; quizRangeHintFlag = {}; renderBody(); };
+    resetBtn.onclick = () => { quizRangeGuesses = {}; quizRangeBoxChecked = {}; quizRangeRecorded = {}; quizRangeHintUsed = false; quizRangeHintActive = null; quizRangeHintFlag = {}; quizRetryKeys = null; renderBody(); };
     actions.appendChild(resetBtn);
     const exitBtnBottom = document.createElement('button');
     exitBtnBottom.className = 'rk-btn';
