@@ -16,6 +16,21 @@ export function mergePendingBatches(currentBatch, restoredBatch){
   return merged;
 }
 
+/** Merge per-direction coverage repairs without changing quiz accuracy data. */
+export function mergeCoverageStates(localState, cloudState){
+  const merged = copy(cloudState || {});
+  Object.entries(localState || {}).forEach(([lineId, local]) => {
+    const cloud = merged[lineId];
+    if(!cloud || Number(local.stateAt || 0) >= Number(cloud.stateAt || 0)){
+      merged[lineId] = {
+        complete: Boolean(local.complete),
+        stateAt: Number(local.stateAt || 0),
+      };
+    }
+  });
+  return merged;
+}
+
 /** Apply device-local deltas to the latest cloud snapshot inside a transaction. */
 export function applyStatDeltas(cloudSnapshot, deltaBatch){
   const cloud = copy(cloudSnapshot);

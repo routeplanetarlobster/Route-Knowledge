@@ -1,5 +1,5 @@
 // Canonical route and speed data. All study modes derive from this file.
-export const ROUTE_DATA_VERSION = '2.1.1';
+export const ROUTE_DATA_VERSION = '2.4.1';
 
 export const TRACK_SPEED_DATA = {
   seaford_down: [

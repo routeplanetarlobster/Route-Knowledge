@@ -2,6 +2,8 @@
 
 Mobile-first Adelaide suburban rail route-knowledge study app. It is a static PWA hosted on GitHub Pages: no package installation, bundler, or build step is required.
 
+The network overview treats Outer Harbor and Seaford as trunk corridors, with Grange and Port Dock branching from Outer Harbor and Flinders branching from Seaford. Completed range quizzes finish with a score summary, contextual mistake review, hint count, and mistake-only retry.
+
 ## Structure
 
 - `index.html` — accessible application shell and dialogs
@@ -10,6 +12,7 @@ Mobile-first Adelaide suburban rail route-knowledge study app. It is a static PW
 - `js/study-data.js` — curated, learner-facing sequences used by quizzes and review modes
 - `js/map-data.js` — map geometry and kilometrage anchors
 - `js/progress-sync.js` — deterministic progress-delta merging
+- `js/coverage-recovery.js` — automatic recovery for progress affected by the temporary v2.0 boundaries
 - `js/storage.js` — local-first browser storage boundary
 - `js/app.js` — application state, views, Firebase and MapLibre integration
 - `sw.js` / `manifest.webmanifest` — installable/offline PWA
@@ -46,6 +49,7 @@ The app deliberately separates reference detail from the learning sequence:
 - Edit learner-facing station groupings and speed sequences in `STUDY_SEGMENTS` inside `js/study-data.js`.
 - Keep sidings, tunnel ends, loops and similar technical points inside a station-to-station study stretch unless they must be recalled as a boundary.
 - Put map-only geography in `js/map-data.js`.
+- Put operational Speed Map caps in `js/map-restrictions.js`. They remain separate from set addenda rows and learner-facing quizzes, and must never raise a lower set speed.
 
 After a correction:
 
@@ -56,7 +60,7 @@ After a correction:
 
 ## Cloud progress
 
-Accounts are optional. Local study and progress work without Firebase. Signed-in progress uses transactionally merged per-attempt deltas so concurrent devices do not replace one another's completed work. Firebase configuration is intentionally public web configuration; access control is enforced by `firestore.rules`.
+Accounts are optional. Local study and progress work without Firebase. Signed-in progress uses transactionally merged per-attempt deltas so concurrent devices do not replace one another's completed work. Coverage affected by the temporary v2.0 boundaries is recovered automatically from its surviving records, remains separate from accuracy, and syncs with the account. Progress exports include both records. Firebase configuration is intentionally public web configuration; access control is enforced by `firestore.rules`.
 
 Deploy the rules separately when they change:
 
