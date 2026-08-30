@@ -61,6 +61,18 @@ for(const lineId of ['belair_down','belair_up']){
   assert.ok(!studyPairs(lineId).some(pair => /Tunnel|Loop/.test(`${pair.from} ${pair.to}`)), `${lineId} technical points do not fragment the quiz`);
 }
 
+for(const lineId of expectedLines){
+  const pairs = studyPairs(lineId);
+  const frequencies = new Map();
+  pairs.forEach(pair => {
+    const signature = pair.speeds.join('>');
+    frequencies.set(signature, (frequencies.get(signature) || 0) + 1);
+  });
+  const unambiguous = pairs.filter(pair => frequencies.get(pair.speeds.join('>')) === 1);
+  assert.ok(unambiguous.length >= 2, `${lineId} has unambiguous reverse-location questions`);
+  assert.ok(pairs.length >= 3, `${lineId} has enough station pairs for three location choices`);
+}
+
 const grangeUp = TRACK_SPEED_DATA.grange_up;
 const grangeSequence = grangeUp.map(row => `${row.label || ''}|${row.km ?? ''}|${row.speed ?? ''}`);
 assert.ok(grangeSequence.some(value => value.includes('|7.347|70')), 'Grange Up inherits 70 km/h at 7.347');
@@ -112,11 +124,12 @@ assert.ok(index.includes('aria-modal="true"'), 'dialogs expose modal semantics')
 assert.ok(!app.includes('SEED_DATA'), 'quiz speeds are not duplicated');
 assert.ok(!app.includes('hasClaudeStorage'), 'legacy host storage is removed');
 assert.ok(!/show(?:Network|SpeedMap|Progress|Review|Landing)\s*=/.test(app), 'one active view controls navigation');
-assert.ok(worker.includes("route-knowledge-pwa-v20"), 'service-worker cache is versioned');
+assert.ok(worker.includes("route-knowledge-pwa-v22"), 'service-worker cache is versioned');
 assert.ok(worker.includes("images/speed-boards/outer-harbor-shared-down-80-km-6-050.jpg"), 'pilot speed-board photo is available offline');
 assert.ok(worker.includes("images/speed-boards/outer-harbor-shared-down-80-km-6-050-full.jpg"), 'full pilot speed-board photo is available offline');
 assert.ok(app.includes("rk-sm-info-tabs") && app.includes("data-sm-view=\"photo\""), 'speed-board panel includes Details and Driver view tabs');
 assert.ok(app.includes("Tap to enlarge") && app.includes("openSpeedBoardPhoto(boardPhoto)"), 'driver-view photograph opens the full-size viewer');
+assert.ok(app.includes("rk-sm-slide-from-left") && app.includes("rk-sm-slide-from-right"), 'speed-board view switch has directional motion');
 const adelaideYard = SPEED_MAP_OPERATIONAL_RESTRICTIONS.find(item => item.id === 'adelaide-yard-35');
 assert.deepEqual(
   {lines:adelaideYard.lines, directions:adelaideYard.directions, fromKm:adelaideYard.fromKm, toKm:adelaideYard.toKm, speed:adelaideYard.speed},
@@ -146,6 +159,10 @@ assert.ok(app.includes('rk-summary-review-head'), 'mistake review has a distinct
 assert.ok(app.includes("summary.classList.add('is-perfect')"), 'perfect summaries expose a compact completion state');
 assert.ok(app.includes('row.replaceChildren(makeResultChip())'), 'range quiz answers update without rebuilding the whole page');
 assert.ok(app.includes("input.enterKeyHint = Number(row.dataset.order) === totalBoxes - 1 ? 'done' : 'next'"), 'mobile keyboards expose next and done actions');
+assert.ok(app.includes("{id:'speeds', label:'Quiz Speeds'}") && app.includes("{id:'locations', label:'Quiz Locations'}"), 'Browse Lines offers both quiz recall modes');
+assert.ok(app.includes('buildLocationQuizQuestions') && app.includes('frequencies[locationSequenceKey(pair)] === 1'), 'location questions only use unique visible speed sequences');
+assert.ok(app.includes("storageAdapter.set('locationQuizStats:v1'"), 'location-quiz results use their own local statistics store');
+assert.ok(app.includes('renderLocationQuizSummary'), 'location quizzes provide results and mistake review');
 const styles = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
 assert.ok(styles.includes('-webkit-text-size-adjust:100%'), 'mobile text scaling stays at the intended layout size');
 assert.match(styles, /\.rk-input\{[\s\S]*?font-size:16px;/, 'quiz inputs avoid iOS focus zoom');

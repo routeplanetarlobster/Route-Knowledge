@@ -2,9 +2,16 @@
 
 ## App update — 2026-08-30
 
+- Added a `Quiz Speeds` / `Quiz Locations` switch directly to Browse Lines.
+- Kept Quiz Speeds as the unchanged default and added a three-choice reverse-recall quiz for matching speed sequences to station sections.
+- Excluded repeated speed sequences from location questions so every question has one valid answer in the selected direction.
+- Added immediate answer feedback, question progress, location-specific results, readable mistake comparisons and mistake-only retry.
+- Stored location results separately so they never alter speed accuracy, spaced repetition or route coverage.
+- Added responsive phone layouts and accessible native answer buttons for quick one-tap practice.
 - Reworked photographed speed markers into compact Details and Driver view tabs, with sideways swipe support.
 - Made the uncropped driver photograph the default marker view and retained tap-to-enlarge with reliable close controls.
 - Tightened the mobile panel spacing and constrained it inside the map so the larger image remains practical on phones.
+- Added a short directional slide when switching between Details and Driver view, while respecting reduced-motion preferences.
 - Added the first physical speed-board photograph to the shared Outer Harbor, Grange and Port Dock Down 80 km/h marker at 6.050 km.
 - Kept photographic coverage optional: only markers with an available image display the driver-view panel.
 - Reframed the pilot photograph for the compact map panel and replaced the separate image tab with a closable in-app viewer.

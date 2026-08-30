@@ -43,7 +43,8 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
 
   let activeLine = LINES[0].id;
   let selectedLineGroup = LINES[0].name;
-  let quizModeType = null; // null | 'segment' | 'range'
+  let quizModeType = null; // null | 'segment' | 'range' | 'locations'
+  let quizRecallType = 'speeds'; // 'speeds' keeps the original quiz; 'locations' reverses the recall
   let quizRangeGuesses = {}; // pairKey -> array of per-box guess strings
   let quizRangeBoxChecked = {}; // pairKey -> array of booleans
   let quizRangeRecorded = {}; // pairKey -> array of booleans (has this box's stat attempt already been logged?)
@@ -51,6 +52,9 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
   let quizRangeHintActive = null; // { pairKey, index } of the box currently showing the hint choice, or null
   let quizRangeHintFlag = {}; // pairKey -> array of booleans (was this specific box resolved via hint?)
   let quizRetryKeys = null; // Set of pair/index keys when retrying only mistakes
+  let locationQuizState = null; // independent reverse-recall session; never contributes to route coverage
+  let locationQuizStats = {}; // locationKey -> { attempts, correct, lastAt }, stored separately from speed stats
+  let locationQuizStatsLoaded = false;
   let mysteryRound = null; // { lineId, lineLabel, fromLabel, toLabel, values: [{value,note,boxFrom,boxTo}], guesses: [], checked: [] }
   let statsData = {}; // statKey -> { attempts, correct, lastAt }
   let statsReconciled = false; // prune saved review keys that no longer exist after route-data updates
@@ -870,6 +874,31 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     });
     await saveStats();
   }
+
+  async function loadLocationQuizStats(){
+    if(locationQuizStatsLoaded) return;
+    try{
+      const res = await storageAdapter.get('locationQuizStats:v1', false);
+      const parsed = res && res.value ? JSON.parse(res.value) : {};
+      locationQuizStats = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    }catch(e){
+      locationQuizStats = {};
+    }
+    locationQuizStatsLoaded = true;
+  }
+
+  async function recordLocationQuizAttempt(lineId, pairKey, correct){
+    await loadLocationQuizStats();
+    const key = lineId + '::' + pairKey;
+    const attemptedAt = Date.now();
+    if(!locationQuizStats[key]) locationQuizStats[key] = {attempts:0, correct:0, lastAt:0};
+    locationQuizStats[key].attempts++;
+    if(correct) locationQuizStats[key].correct++;
+    locationQuizStats[key].lastAt = attemptedAt;
+    try{
+      await storageAdapter.set('locationQuizStats:v1', JSON.stringify(locationQuizStats), false);
+    }catch(e){}
+  }
   // Called once every box in a stretch has been checked. A safety-critical sequence
   // isn't "mostly right" \u2014 if any single box was wrong, the whole stretch's learning
   // clock resets together and comes back soon, rather than letting the correct boxes
@@ -1277,6 +1306,8 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
         const pages=[...infoContent.querySelectorAll('.rk-sm-info-page')];
         const pagesWrap=infoContent.querySelector('.rk-sm-info-pages');
         const setView=view=>{
+          const previous=pagesWrap.dataset.smActive;
+          if(previous===view)return;
           pagesWrap.dataset.smActive=view;
           tabs.forEach(tab=>{
             const active=tab.dataset.smView===view;
@@ -1284,6 +1315,12 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
             tab.setAttribute('aria-selected',active?'true':'false');
           });
           pages.forEach(page=>page.classList.toggle('hidden',page.dataset.smPage!==view));
+          const entering=pages.find(page=>page.dataset.smPage===view);
+          if(entering){
+            entering.classList.remove('rk-sm-slide-from-left','rk-sm-slide-from-right');
+            void entering.offsetWidth;
+            entering.classList.add(view==='photo'?'rk-sm-slide-from-right':'rk-sm-slide-from-left');
+          }
         };
         tabs.forEach(tab=>tab.onclick=()=>setView(tab.dataset.smView));
         let swipeStart=null;
@@ -1938,6 +1975,7 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     quizRangeHintActive = null;
     quizRangeHintFlag = {};
     quizRetryKeys = null;
+    locationQuizState = null;
   }
 
   function renderNav(){
@@ -2038,12 +2076,38 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     btnRow.style.flexWrap = 'wrap';
 
     if(quizModeType){
+      const activeQuizLabel = document.createElement('span');
+      activeQuizLabel.className = 'rk-active-quiz-label';
+      activeQuizLabel.textContent = quizModeType === 'locations' ? 'Quiz Locations' : 'Quiz Speeds';
+      btnRow.appendChild(activeQuizLabel);
       const exitBtn = document.createElement('button');
       exitBtn.className = 'rk-btn quiz-active';
       exitBtn.textContent = 'Exit Quiz';
       exitBtn.onclick = () => { exitQuiz(); renderBody(); };
       btnRow.appendChild(exitBtn);
     } else {
+      const quizTypeSwitch = document.createElement('div');
+      quizTypeSwitch.className = 'rk-quiz-type-switch';
+      quizTypeSwitch.setAttribute('role', 'group');
+      quizTypeSwitch.setAttribute('aria-label', 'Choose quiz type');
+      [
+        {id:'speeds', label:'Quiz Speeds'},
+        {id:'locations', label:'Quiz Locations'},
+      ].forEach(option => {
+        const typeBtn = document.createElement('button');
+        typeBtn.type = 'button';
+        typeBtn.className = quizRecallType === option.id ? 'active' : '';
+        typeBtn.textContent = option.label;
+        typeBtn.setAttribute('aria-pressed', quizRecallType === option.id ? 'true' : 'false');
+        typeBtn.onclick = () => {
+          quizRecallType = option.id;
+          showLineHeatmap = false;
+          renderBody();
+        };
+        quizTypeSwitch.appendChild(typeBtn);
+      });
+      btnRow.appendChild(quizTypeSwitch);
+
       const rangeQuizBtn = document.createElement('button');
       rangeQuizBtn.className = 'rk-btn';
       rangeQuizBtn.textContent = 'Start Quiz';
@@ -2052,7 +2116,8 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
       rangeQuizBtn.onclick = () => {
         quizRangeGuesses = {}; quizRangeBoxChecked = {};
         quizRetryKeys = null;
-        quizModeType = 'range';
+        locationQuizState = null;
+        quizModeType = quizRecallType === 'locations' ? 'locations' : 'range';
         renderBody();
       };
       btnRow.appendChild(rangeQuizBtn);
@@ -2078,6 +2143,11 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
 
     if(quizModeType === 'range'){
       renderQuizRange(segs, line);
+      return;
+    }
+
+    if(quizModeType === 'locations'){
+      renderLocationQuiz(segs, line);
       return;
     }
 
@@ -2176,6 +2246,46 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
       pairs.push({ key: idxA + '_' + idxB, from: points[idxA], to: points[idxB], speeds });
     }
     return pairs;
+  }
+
+  function shuffledCopy(items){
+    const copy = items.slice();
+    for(let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function locationSequenceKey(pair){
+    return pair.speeds.map(speed => String(speed.value)).join('>');
+  }
+
+  function buildLocationQuizQuestions(segs){
+    const pairs = computeRangePairs(segs);
+    const frequencies = {};
+    pairs.forEach(pair => {
+      const signature = locationSequenceKey(pair);
+      frequencies[signature] = (frequencies[signature] || 0) + 1;
+    });
+
+    // A reverse question is only admitted when its visible speed sequence has
+    // exactly one valid location in this line and direction.
+    const eligible = pairs.filter(pair => frequencies[locationSequenceKey(pair)] === 1);
+    return shuffledCopy(eligible).map(pair => {
+      const distractors = shuffledCopy(pairs.filter(candidate => candidate.key !== pair.key)).slice(0, 2);
+      return {
+        id: pair.key,
+        pair,
+        options: shuffledCopy([pair, ...distractors]).map(option => ({
+          key: option.key,
+          label: option.from + ' → ' + option.to,
+        })),
+        selectedKey: null,
+        checked: false,
+        recorded: false,
+      };
+    });
   }
 
   async function reconcileStatsWithCurrentData(){
@@ -3825,6 +3935,242 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
   function quizItemCorrect(pair, item){
     const guess = quizRangeGuesses[pair.key][item.index];
     return !quizRangeHintFlag[pair.key][item.index] && guess !== '' && guess !== undefined && Number(guess) === Number(item.sp.value);
+  }
+
+  function locationQuestionCorrect(question){
+    return question.checked && question.selectedKey === question.pair.key;
+  }
+
+  function renderLocationSequence(container, speeds){
+    const sequence = document.createElement('div');
+    sequence.className = 'rk-location-sequence';
+    sequence.setAttribute('aria-label', 'Speed sequence ' + speeds.map(speed => speed.value + ' kilometres per hour').join(', then '));
+    speeds.forEach((speed, index) => {
+      const board = document.createElement('div');
+      board.className = 'rk-board';
+      board.innerHTML = escapeHtml(speed.value) + '<span class="u">km/h</span>';
+      sequence.appendChild(board);
+      if(index < speeds.length - 1){
+        const arrow = document.createElement('span');
+        arrow.className = 'rk-location-sequence-arrow';
+        arrow.textContent = '→';
+        sequence.appendChild(arrow);
+      }
+    });
+    container.appendChild(sequence);
+  }
+
+  function renderLocationQuizSummary(line){
+    const questions = locationQuizState.questions;
+    const correctQuestions = questions.filter(locationQuestionCorrect);
+    const mistakes = questions.filter(question => !locationQuestionCorrect(question));
+    const pct = questions.length ? Math.round((correctQuestions.length / questions.length) * 100) : 0;
+
+    const summary = document.createElement('section');
+    summary.className = 'rk-quiz-done rk-quiz-summary rk-location-summary';
+    if(mistakes.length === 0) summary.classList.add('is-perfect');
+    summary.setAttribute('aria-labelledby', 'rk-location-summary-title');
+
+    const hero = document.createElement('div');
+    hero.className = 'rk-summary-hero';
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'rk-form-title';
+    eyebrow.textContent = locationQuizState.isRetry ? 'Location retry complete' : line.name + ' — ' + line.direction + ' · Quiz Locations';
+    hero.appendChild(eyebrow);
+    const title = document.createElement('h2');
+    title.id = 'rk-location-summary-title';
+    title.textContent = mistakes.length === 0 ? 'Quiz complete — excellent work' : 'Quiz complete';
+    hero.appendChild(title);
+    const score = document.createElement('div');
+    score.className = 'score';
+    score.setAttribute('aria-label', pct + ' percent correct');
+    score.innerHTML = '<strong>' + pct + '%</strong><span>location score</span>';
+    hero.appendChild(score);
+    summary.appendChild(hero);
+
+    const metrics = document.createElement('div');
+    metrics.className = 'rk-summary-metrics rk-location-metrics';
+    [
+      {value:correctQuestions.length + ' / ' + questions.length, label:'Correct'},
+      {value:String(mistakes.length), label:'To retry'},
+    ].forEach(metric => {
+      const card = document.createElement('div');
+      card.className = 'rk-summary-metric';
+      card.innerHTML = '<strong>' + metric.value + '</strong><span>' + metric.label + '</span>';
+      metrics.appendChild(card);
+    });
+    summary.appendChild(metrics);
+
+    if(mistakes.length > 0){
+      const reviewHead = document.createElement('div');
+      reviewHead.className = 'rk-summary-review-head';
+      reviewHead.innerHTML = '<h3>Review ' + mistakes.length + ' mistake' + (mistakes.length === 1 ? '' : 's') + '</h3>' +
+        '<p>Match each speed sequence to the correct station-to-station section.</p>';
+      summary.appendChild(reviewHead);
+
+      const mistakeList = document.createElement('div');
+      mistakeList.className = 'rk-summary-list';
+      mistakes.forEach((question, mistakeIndex) => {
+        const chosen = question.options.find(option => option.key === question.selectedKey);
+        const row = document.createElement('div');
+        row.className = 'rk-summary-row';
+        row.setAttribute('aria-label', 'Location mistake ' + (mistakeIndex + 1) + ' of ' + mistakes.length);
+        const context = document.createElement('div');
+        context.className = 'rk-summary-context';
+        const sequenceLabel = question.pair.speeds.map(speed => speed.value).join(' → ') + ' km/h';
+        context.innerHTML = '<strong>' + escapeHtml(sequenceLabel) + '</strong><span>Speed sequence</span>';
+        const answer = document.createElement('div');
+        answer.className = 'rk-answer-comparison';
+        const yourAnswer = document.createElement('div');
+        yourAnswer.className = 'rk-answer-box wrong';
+        yourAnswer.innerHTML = '<span>Your answer</span><strong>' + escapeHtml(chosen ? chosen.label : 'No answer') + '</strong>';
+        const correctAnswer = document.createElement('div');
+        correctAnswer.className = 'rk-answer-box correct';
+        correctAnswer.innerHTML = '<span>Correct location</span><strong>' + escapeHtml(question.pair.from + ' → ' + question.pair.to) + '</strong>';
+        answer.appendChild(yourAnswer);
+        answer.appendChild(correctAnswer);
+        row.appendChild(context);
+        row.appendChild(answer);
+        mistakeList.appendChild(row);
+      });
+      summary.appendChild(mistakeList);
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'rk-action-row rk-summary-actions';
+    if(mistakes.length > 0){
+      const retryBtn = document.createElement('button');
+      retryBtn.className = 'rk-btn primary';
+      retryBtn.textContent = 'Retry ' + mistakes.length + ' location' + (mistakes.length === 1 ? '' : 's');
+      retryBtn.onclick = () => {
+        locationQuizState = {
+          lineId:line.id,
+          index:0,
+          isRetry:true,
+          questions:mistakes.map(question => ({
+            ...question,
+            options:shuffledCopy(question.options),
+            selectedKey:null,
+            checked:false,
+            recorded:false,
+          })),
+        };
+        renderBody();
+      };
+      actions.appendChild(retryBtn);
+    }
+    const restartBtn = document.createElement('button');
+    restartBtn.className = 'rk-btn';
+    restartBtn.textContent = 'Restart full quiz';
+    restartBtn.onclick = () => {
+      locationQuizState = {lineId:line.id, index:0, isRetry:false, questions:buildLocationQuizQuestions(segCache[line.id] || [])};
+      renderBody();
+    };
+    actions.appendChild(restartBtn);
+    const exitBtn = document.createElement('button');
+    exitBtn.className = 'rk-btn';
+    exitBtn.textContent = 'Back to line';
+    exitBtn.onclick = () => { exitQuiz(); renderBody(); };
+    actions.appendChild(exitBtn);
+    summary.appendChild(actions);
+    bodyEl.appendChild(summary);
+  }
+
+  function renderLocationQuiz(segs, line){
+    if(!locationQuizState || locationQuizState.lineId !== line.id){
+      locationQuizState = {lineId:line.id, index:0, isRetry:false, questions:buildLocationQuizQuestions(segs)};
+    }
+
+    if(locationQuizState.questions.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'rk-empty';
+      empty.innerHTML = '<div class="big">No unambiguous location questions yet</div>' +
+        'This direction does not yet have a speed sequence that belongs to only one named-station section.';
+      bodyEl.appendChild(empty);
+      return;
+    }
+
+    if(locationQuizState.index >= locationQuizState.questions.length){
+      renderLocationQuizSummary(line);
+      return;
+    }
+
+    const question = locationQuizState.questions[locationQuizState.index];
+    const quiz = document.createElement('section');
+    quiz.className = 'rk-location-quiz';
+    quiz.setAttribute('aria-labelledby', 'rk-location-question-title');
+
+    const progress = document.createElement('div');
+    progress.className = 'rk-quizbar rk-location-progress';
+    progress.innerHTML = '<span>' + (locationQuizState.isRetry ? 'Retry locations' : 'Quiz Locations') + '</span>' +
+      '<span>Question <b>' + (locationQuizState.index + 1) + '</b> / ' + locationQuizState.questions.length + '</span>';
+    quiz.appendChild(progress);
+
+    const card = document.createElement('div');
+    card.className = 'rk-location-card';
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'rk-form-title';
+    eyebrow.textContent = line.name + ' · ' + line.direction;
+    card.appendChild(eyebrow);
+    const title = document.createElement('h2');
+    title.id = 'rk-location-question-title';
+    title.textContent = 'Which section has this speed sequence?';
+    card.appendChild(title);
+    const helper = document.createElement('p');
+    helper.className = 'rk-location-helper';
+    helper.textContent = 'Choose the exact sequence between two consecutive named stations.';
+    card.appendChild(helper);
+    renderLocationSequence(card, question.pair.speeds);
+
+    const choices = document.createElement('div');
+    choices.className = 'rk-location-choices';
+    question.options.forEach((option, optionIndex) => {
+      const choice = document.createElement('button');
+      choice.type = 'button';
+      choice.className = 'rk-location-choice';
+      choice.disabled = question.checked;
+      choice.innerHTML = '<span class="rk-location-choice-letter">' + String.fromCharCode(65 + optionIndex) + '</span>' +
+        '<span>' + escapeHtml(option.label) + '</span>';
+      if(question.checked){
+        if(option.key === question.pair.key) choice.classList.add('correct');
+        if(option.key === question.selectedKey && option.key !== question.pair.key) choice.classList.add('wrong');
+      }
+      choice.onclick = () => {
+        if(question.checked) return;
+        question.selectedKey = option.key;
+        question.checked = true;
+        if(!question.recorded){
+          question.recorded = true;
+          recordLocationQuizAttempt(line.id, question.pair.key, option.key === question.pair.key);
+        }
+        renderBody();
+      };
+      choices.appendChild(choice);
+    });
+    card.appendChild(choices);
+
+    if(question.checked){
+      const feedback = document.createElement('div');
+      const isCorrect = locationQuestionCorrect(question);
+      feedback.className = 'rk-location-feedback ' + (isCorrect ? 'correct' : 'wrong');
+      feedback.setAttribute('role', 'status');
+      feedback.textContent = isCorrect
+        ? 'Correct — that sequence belongs here.'
+        : 'Not quite — the correct section is ' + question.pair.from + ' to ' + question.pair.to + '.';
+      card.appendChild(feedback);
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'rk-btn primary rk-location-next';
+      nextBtn.textContent = locationQuizState.index === locationQuizState.questions.length - 1 ? 'View results' : 'Next question';
+      nextBtn.onclick = () => {
+        locationQuizState.index++;
+        renderBody();
+      };
+      card.appendChild(nextBtn);
+    }
+
+    quiz.appendChild(card);
+    bodyEl.appendChild(quiz);
   }
 
   function renderQuizSummary(visiblePairs, line){
