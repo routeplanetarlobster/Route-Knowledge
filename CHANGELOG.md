@@ -2,6 +2,14 @@
 
 ## App update — 2026-08-30
 
+- Reworked photographed speed markers into compact Details and Driver view tabs, with sideways swipe support.
+- Made the uncropped driver photograph the default marker view and retained tap-to-enlarge with reliable close controls.
+- Tightened the mobile panel spacing and constrained it inside the map so the larger image remains practical on phones.
+- Added the first physical speed-board photograph to the shared Outer Harbor, Grange and Port Dock Down 80 km/h marker at 6.050 km.
+- Kept photographic coverage optional: only markers with an available image display the driver-view panel.
+- Reframed the pilot photograph for the compact map panel and replaced the separate image tab with a closable in-app viewer.
+- Loosened the compact crop and restored the complete portrait photograph in the enlarged viewer.
+- Shifted the compact framing down to place the signal head at the top and retain more crossing and track context below the board.
 - Rebuilt the quiz completion hierarchy with a distinct score, readable metric cards and clearer spacing.
 - Split every incorrect result into a route context and side-by-side entered/correct speed comparison.
 - Improved narrow-screen stacking and bumped the PWA cache so the refined summary loads reliably.

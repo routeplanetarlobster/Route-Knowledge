@@ -24,6 +24,23 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     {id:'tonsley_up', name:'Flinders Line', hue:'#e8a830', direction:'Up'},
   ];
 
+  // Physical board photographs are intentionally opt-in. A marker only shows
+  // a photo when an exact line, direction, speed and source kilometre match is
+  // present here, so incomplete photographic coverage never creates clutter.
+  const SPEED_BOARD_PHOTOS = [
+    {
+      lines:['outer_harbor','grange','port_dock'],
+      direction:'down',
+      km:6.050,
+      speed:80,
+      src:'./images/speed-boards/outer-harbor-shared-down-80-km-6-050.jpg',
+      fullSrc:'./images/speed-boards/outer-harbor-shared-down-80-km-6-050-full.jpg',
+      alt:'Driver view of the 80 km/h Down speed board between Kilkenny and Woodville Park',
+      caption:'Driver view · Kilkenny to Woodville Park',
+      route:'Kilkenny → Woodville Park'
+    }
+  ];
+
   let activeLine = LINES[0].id;
   let selectedLineGroup = LINES[0].name;
   let quizModeType = null; // null | 'segment' | 'range'
@@ -1197,24 +1214,91 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     }
     function clearMarkers(){mapMarkers.forEach(m=>{try{m.remove();}catch(e){}});mapMarkers=[];}
 
-    function showInfo(latlng,forced=null){
+    function speedBoardPhoto(interval){
+      if(!interval)return null;
+      return SPEED_BOARD_PHOTOS.find(photo=>
+        photo.lines.includes(speedMapLine) &&
+        photo.direction===speedMapDirection &&
+        photo.speed===Number(interval.speed) &&
+        Math.abs(photo.km-Number(interval.startKm))<1e-6
+      )||null;
+    }
+
+    function openSpeedBoardPhoto(photo){
+      const returnFocus=document.activeElement;
+      const viewer=document.createElement('div');
+      viewer.className='rk-sm-photo-viewer';
+      viewer.setAttribute('role','dialog');
+      viewer.setAttribute('aria-modal','true');
+      viewer.setAttribute('aria-label','Speed board driver view');
+      viewer.innerHTML='<div class="rk-sm-photo-viewer-card"><button class="rk-sm-photo-viewer-close" type="button" aria-label="Close image">×</button><img src="'+escapeHtml(photo.fullSrc||photo.src)+'" alt="'+escapeHtml(photo.alt)+'"><div class="rk-sm-photo-viewer-caption">'+escapeHtml(photo.caption)+'</div></div>';
+      const close=()=>{
+        document.removeEventListener('keydown',onKey);
+        viewer.remove();
+        if(returnFocus&&returnFocus.focus)returnFocus.focus();
+      };
+      const onKey=event=>{if(event.key==='Escape')close();};
+      viewer.querySelector('.rk-sm-photo-viewer-close').onclick=close;
+      viewer.addEventListener('click',event=>{if(event.target===viewer)close();});
+      document.addEventListener('keydown',onKey);
+      document.body.appendChild(viewer);
+      viewer.querySelector('.rk-sm-photo-viewer-close').focus();
+    }
+
+    function showInfo(latlng,forced=null,showBoardPhoto=false){
       const p=speedMapNearest(latlng),km=p.officialKm,interval=forced||speedMapIntervalAt(km),named=speedMapNamedRows(km),meta=SPEED_MAP_META[speedMapLine];
+      const boardPhoto=showBoardPhoto?speedBoardPhoto(interval):null;
       let html='<div class="rk-sm-info-title">'+escapeHtml(meta.label)+' — '+(speedMapDirection==='down'?'Down':'Up')+'</div><div class="rk-sm-info-sub">Tapped at official km '+km.toFixed(3)+'</div>';
+      let details='';
       if(interval){
-        html+='<div class="rk-sm-speed-big" style="color:'+speedMapColor(interval.speed)+'">'+interval.speed+' <small>km/h</small></div>';
+        details+='<div class="rk-sm-speed-big" style="color:'+speedMapColor(interval.speed)+'">'+interval.speed+' <small>km/h</small></div>';
         const dirArrow=speedMapDirection==='up'?' ↓ ':' → ';
-        html+='<div class="rk-sm-stat"><span class="k">Speed applies</span><span class="v">'+(interval.approximate?'approx. ':'')+'km '+Number(interval.startKm).toFixed(3)+dirArrow+Number(interval.endKm).toFixed(3)+'</span></div>';
-        if(interval.mapReference)html+='<div class="rk-sm-comment">Map position aligned to '+escapeHtml(interval.mapReference)+' for the Adelaide Station 15 km/h boundary. The source kilometrage remains unchanged.</div>';
-        else if(interval.approximate)html+='<div class="rk-sm-comment">Approximate map position only — the source gives this speed in sequence but does not state a kilometre value.</div>';
+        details+='<div class="rk-sm-stat"><span class="k">Speed applies</span><span class="v">'+(interval.approximate?'approx. ':'')+'km '+Number(interval.startKm).toFixed(3)+dirArrow+Number(interval.endKm).toFixed(3)+'</span></div>';
+        if(interval.mapReference)details+='<div class="rk-sm-comment">Map position aligned to '+escapeHtml(interval.mapReference)+' for the Adelaide Station 15 km/h boundary. The source kilometrage remains unchanged.</div>';
+        else if(interval.approximate)details+='<div class="rk-sm-comment">Approximate map position only — the source gives this speed in sequence but does not state a kilometre value.</div>';
         if(interval.operationalRestriction||interval.restrictionBoundary){
           const restriction=interval.operationalRestriction||interval.restrictionBoundary;
-          html+='<div class="rk-sm-comment"><strong>Operational restriction:</strong> maximum '+restriction.speed+' km/h from km '+restriction.fromKm.toFixed(3)+' to '+restriction.toKm.toFixed(3)+' (Down &amp; Up), '+escapeHtml(restriction.location)+'. '+escapeHtml(restriction.source)+'. Set addenda speeds and quizzes are unchanged.</div>';
+          details+='<div class="rk-sm-comment"><strong>Operational restriction:</strong> maximum '+restriction.speed+' km/h from km '+restriction.fromKm.toFixed(3)+' to '+restriction.toKm.toFixed(3)+' (Down &amp; Up), '+escapeHtml(restriction.location)+'. '+escapeHtml(restriction.source)+'. Set addenda speeds and quizzes are unchanged.</div>';
         }
-        if(interval.comment)html+='<div class="rk-sm-comment">'+escapeHtml(interval.comment)+'</div>';
-      }else html+='<div class="rk-sm-speed-big" style="color:#9aa5ba">— <small>no exact plotted speed</small></div>';
-      if(named.before)html+='<div class="rk-sm-stat"><span class="k">Previous point</span><span class="v">'+escapeHtml(named.before.label)+' · km '+named.before.km.toFixed(3)+'</span></div>';
-      if(named.after)html+='<div class="rk-sm-stat"><span class="k">Next point</span><span class="v">'+escapeHtml(named.after.label)+' · km '+named.after.km.toFixed(3)+'</span></div>';
-      document.getElementById('rk-sm-info-content').innerHTML=html;document.getElementById('rk-sm-info').classList.remove('hidden');
+        if(interval.comment)details+='<div class="rk-sm-comment">'+escapeHtml(interval.comment)+'</div>';
+      }else details+='<div class="rk-sm-speed-big" style="color:#9aa5ba">— <small>no exact plotted speed</small></div>';
+      if(named.before)details+='<div class="rk-sm-stat"><span class="k">Previous point</span><span class="v">'+escapeHtml(named.before.label)+' · km '+named.before.km.toFixed(3)+'</span></div>';
+      if(named.after)details+='<div class="rk-sm-stat"><span class="k">Next point</span><span class="v">'+escapeHtml(named.after.label)+' · km '+named.after.km.toFixed(3)+'</span></div>';
+      if(boardPhoto){
+        html+='<div class="rk-sm-info-tabs" role="tablist" aria-label="Speed information view"><button class="rk-sm-info-tab" type="button" role="tab" aria-selected="false" data-sm-view="details">Details</button><button class="rk-sm-info-tab active" type="button" role="tab" aria-selected="true" data-sm-view="photo">Driver view</button></div>';
+        html+='<div class="rk-sm-info-pages" data-sm-active="photo"><section class="rk-sm-info-page hidden" data-sm-page="details" role="tabpanel">'+details+'</section><section class="rk-sm-info-page rk-sm-info-page-photo" data-sm-page="photo" role="tabpanel"><div class="rk-sm-photo-route"><strong>'+escapeHtml(boardPhoto.route||boardPhoto.caption)+'</strong><span>Tap to enlarge</span></div><button class="rk-sm-board-photo" type="button" aria-label="Enlarge driver photo: '+escapeHtml(boardPhoto.caption)+'"><img src="'+escapeHtml(boardPhoto.fullSrc||boardPhoto.src)+'" alt="'+escapeHtml(boardPhoto.alt)+'" loading="lazy"></button></section></div>';
+      }else html+=details;
+      const infoContent=document.getElementById('rk-sm-info-content');
+      infoContent.innerHTML=html;
+      const infoPanel=document.getElementById('rk-sm-info');
+      infoPanel.classList.toggle('has-photo',Boolean(boardPhoto));
+      if(boardPhoto){
+        const tabs=[...infoContent.querySelectorAll('.rk-sm-info-tab')];
+        const pages=[...infoContent.querySelectorAll('.rk-sm-info-page')];
+        const pagesWrap=infoContent.querySelector('.rk-sm-info-pages');
+        const setView=view=>{
+          pagesWrap.dataset.smActive=view;
+          tabs.forEach(tab=>{
+            const active=tab.dataset.smView===view;
+            tab.classList.toggle('active',active);
+            tab.setAttribute('aria-selected',active?'true':'false');
+          });
+          pages.forEach(page=>page.classList.toggle('hidden',page.dataset.smPage!==view));
+        };
+        tabs.forEach(tab=>tab.onclick=()=>setView(tab.dataset.smView));
+        let swipeStart=null;
+        pagesWrap.addEventListener('pointerdown',event=>{swipeStart=event.clientX;});
+        pagesWrap.addEventListener('pointerup',event=>{
+          if(swipeStart===null)return;
+          const delta=event.clientX-swipeStart;
+          if(delta<-45)setView('photo');
+          else if(delta>45)setView('details');
+          swipeStart=null;
+        });
+        pagesWrap.addEventListener('pointercancel',()=>{swipeStart=null;});
+        infoContent.querySelector('.rk-sm-board-photo').onclick=()=>openSpeedBoardPhoto(boardPhoto);
+      }
+      infoPanel.classList.remove('hidden');
     }
 
     function renderLabels(){
@@ -1227,7 +1311,7 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
         el.style.background=speedMapColor(r.speed);el.textContent=r.speed;
         const markerLocation=r.mapReference?(r.mapReference+' map reference'):(r.approximate?'approx. position (source km not stated)':'km '+Number(r.plotKm).toFixed(3));
         el.title=r.speed+' km/h · '+markerLocation+(r.comment?' · '+r.comment:'');
-        el.addEventListener('click',ev=>{ev.stopPropagation();showInfo({lat:c[0],lng:c[1]},r);});
+        el.addEventListener('click',ev=>{ev.stopPropagation();showInfo({lat:c[0],lng:c[1]},r,true);});
         const marker=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(toLngLat(c)).addTo(map);mapMarkers.push(marker);
       });
       speedMapRows().forEach(r=>{

@@ -112,7 +112,11 @@ assert.ok(index.includes('aria-modal="true"'), 'dialogs expose modal semantics')
 assert.ok(!app.includes('SEED_DATA'), 'quiz speeds are not duplicated');
 assert.ok(!app.includes('hasClaudeStorage'), 'legacy host storage is removed');
 assert.ok(!/show(?:Network|SpeedMap|Progress|Review|Landing)\s*=/.test(app), 'one active view controls navigation');
-assert.ok(worker.includes("route-knowledge-pwa-v15"), 'service-worker cache is versioned');
+assert.ok(worker.includes("route-knowledge-pwa-v20"), 'service-worker cache is versioned');
+assert.ok(worker.includes("images/speed-boards/outer-harbor-shared-down-80-km-6-050.jpg"), 'pilot speed-board photo is available offline');
+assert.ok(worker.includes("images/speed-boards/outer-harbor-shared-down-80-km-6-050-full.jpg"), 'full pilot speed-board photo is available offline');
+assert.ok(app.includes("rk-sm-info-tabs") && app.includes("data-sm-view=\"photo\""), 'speed-board panel includes Details and Driver view tabs');
+assert.ok(app.includes("Tap to enlarge") && app.includes("openSpeedBoardPhoto(boardPhoto)"), 'driver-view photograph opens the full-size viewer');
 const adelaideYard = SPEED_MAP_OPERATIONAL_RESTRICTIONS.find(item => item.id === 'adelaide-yard-35');
 assert.deepEqual(
   {lines:adelaideYard.lines, directions:adelaideYard.directions, fromKm:adelaideYard.fromKm, toKm:adelaideYard.toKm, speed:adelaideYard.speed},

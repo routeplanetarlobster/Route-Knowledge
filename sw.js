@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'route-knowledge-pwa-v15';
+const CACHE_VERSION = 'route-knowledge-pwa-v20';
 const APP_SHELL = [
   './',
   './index.html',
@@ -11,6 +11,8 @@ const APP_SHELL = [
   './js/storage.js',
   './js/progress-sync.js',
   './js/coverage-recovery.js',
+  './images/speed-boards/outer-harbor-shared-down-80-km-6-050.jpg',
+  './images/speed-boards/outer-harbor-shared-down-80-km-6-050-full.jpg',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
