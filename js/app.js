@@ -4044,14 +4044,16 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
             const nextRow = bodyEl.querySelector('[data-order="' + (myOrder + 1) + '"]');
             const nextInput = nextRow ? nextRow.querySelector('.rk-input') : null;
 
+            // Keep the mobile keyboard alive by transferring focus before the
+            // submitted input is removed from the DOM. Mobile Safari can drop
+            // programmatic focus if there is even a brief no-input gap.
+            const progress = updateQuizBar();
+            if(progress.checked !== totalBoxes && nextInput) nextInput.focus();
             row.replaceChildren(makeResultChip());
             if(sp.note) row.appendChild(makeNoteLabel());
-            const progress = updateQuizBar();
 
             if(progress.checked === totalBoxes){
               renderBody();
-            } else if(nextInput){
-              nextInput.focus();
             }
 
             if(isFirstAttempt){

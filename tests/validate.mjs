@@ -112,7 +112,7 @@ assert.ok(index.includes('aria-modal="true"'), 'dialogs expose modal semantics')
 assert.ok(!app.includes('SEED_DATA'), 'quiz speeds are not duplicated');
 assert.ok(!app.includes('hasClaudeStorage'), 'legacy host storage is removed');
 assert.ok(!/show(?:Network|SpeedMap|Progress|Review|Landing)\s*=/.test(app), 'one active view controls navigation');
-assert.ok(worker.includes("route-knowledge-pwa-v13"), 'service-worker cache is versioned');
+assert.ok(worker.includes("route-knowledge-pwa-v15"), 'service-worker cache is versioned');
 const adelaideYard = SPEED_MAP_OPERATIONAL_RESTRICTIONS.find(item => item.id === 'adelaide-yard-35');
 assert.deepEqual(
   {lines:adelaideYard.lines, directions:adelaideYard.directions, fromKm:adelaideYard.fromKm, toKm:adelaideYard.toKm, speed:adelaideYard.speed},
@@ -142,6 +142,11 @@ assert.ok(app.includes('rk-summary-review-head'), 'mistake review has a distinct
 assert.ok(app.includes("summary.classList.add('is-perfect')"), 'perfect summaries expose a compact completion state');
 assert.ok(app.includes('row.replaceChildren(makeResultChip())'), 'range quiz answers update without rebuilding the whole page');
 assert.ok(app.includes("input.enterKeyHint = Number(row.dataset.order) === totalBoxes - 1 ? 'done' : 'next'"), 'mobile keyboards expose next and done actions');
+const styles = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+assert.ok(styles.includes('-webkit-text-size-adjust:100%'), 'mobile text scaling stays at the intended layout size');
+assert.match(styles, /\.rk-input\{[\s\S]*?font-size:16px;/, 'quiz inputs avoid iOS focus zoom');
+const rangeCommit = app.slice(app.indexOf('const commitAnswer = () =>'), app.indexOf("input.addEventListener('blur', commitAnswer)"));
+assert.ok(rangeCommit.indexOf('nextInput.focus()') < rangeCommit.indexOf('row.replaceChildren(makeResultChip())'), 'mobile quiz focus transfers before the submitted input is replaced');
 for(const asset of ['styles.css','js/app.js','js/route-data.js','js/study-data.js','js/map-data.js','js/map-restrictions.js','js/storage.js','js/progress-sync.js','js/coverage-recovery.js']){
   assert.ok(worker.includes(`'./${asset}'`), `${asset} is in the app shell`);
 }

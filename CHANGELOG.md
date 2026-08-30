@@ -7,6 +7,8 @@
 - Improved narrow-screen stacking and bumped the PWA cache so the refined summary loads reliably.
 - Removed full-page quiz rerenders after each submitted speed so mobile answer entry responds immediately.
 - Kept the numeric keyboard moving through Next and Done actions while progress saves continue in the background.
+- Prevented iPhone form-focus zoom by keeping mobile quiz inputs and line selectors at the 16 px safety threshold.
+- Preserved continuous mobile quiz entry by focusing the next speed box before replacing the submitted input.
 
 ## Route data v2.4.1 — 2026-08-26
 
