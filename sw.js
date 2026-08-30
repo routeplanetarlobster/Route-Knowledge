@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'route-knowledge-pwa-v4';
+const CACHE_VERSION = 'route-knowledge-pwa-v13';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,8 +7,10 @@ const APP_SHELL = [
   './js/route-data.js',
   './js/study-data.js',
   './js/map-data.js',
+  './js/map-restrictions.js',
   './js/storage.js',
   './js/progress-sync.js',
+  './js/coverage-recovery.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

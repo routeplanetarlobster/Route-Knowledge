@@ -1,5 +1,51 @@
 # Changelog
 
+## App update — 2026-08-30
+
+- Rebuilt the quiz completion hierarchy with a distinct score, readable metric cards and clearer spacing.
+- Split every incorrect result into a route context and side-by-side entered/correct speed comparison.
+- Improved narrow-screen stacking and bumped the PWA cache so the refined summary loads reliably.
+- Removed full-page quiz rerenders after each submitted speed so mobile answer entry responds immediately.
+- Kept the numeric keyboard moving through Next and Done actions while progress saves continue in the background.
+
+## Route data v2.4.1 — 2026-08-26
+
+- Aligned Speed Map number bubbles with the final applicable-speed boundaries.
+- Added bubbles at operational-restriction boundaries and suppressed permanent-speed bubbles where the restriction masks that change.
+- Kept station labels independent so their positions remain tied to their actual kilometrage.
+
+## Route data v2.4.0 — 2026-08-26
+
+- Extended the applicable 35 km/h section on Gawler, Outer Harbor, Grange and Port Dock to cover km 0.633–1.380, Down and Up, from the first entry of Train Notice 238.
+- Kept the operational restriction as a Speed Map-only cap, leaving set addenda speeds and all quizzes unchanged.
+- Continued to show any lower set speed within the restricted area.
+
+## Route data v2.3.1 — 2026-08-26
+
+- Refined quiz-summary spacing and visual hierarchy.
+- Replaced the compressed answer text with separate Your answer and Correct speed panels.
+- Improved summary readability on narrow screens.
+
+## Route data v2.3.0 — 2026-08-26
+
+- Reworked Network Overview so Outer Harbor and Seaford are the main corridors.
+- Nested Grange and Port Dock under their Outer Harbor junctions and Flinders under the Seaford corridor.
+- Added an end-of-quiz score summary with incorrect ranges, correct answers and hint usage.
+- Added mistake-only retry without resetting correct answers from the completed quiz.
+
+## Route data v2.2.1 — 2026-08-26
+
+- Replaced the manual coverage-repair checklist with automatic recovery.
+- Used surviving keys shared with the temporary v2.0 structure as conservative evidence that a direction had previously been completed.
+- Left partial directions and all accuracy/review records untouched.
+
+## Route data v2.2.0 — 2026-08-26
+
+- Added a coverage-repair panel for progress lost during the temporary v2.0 study-boundary migration.
+- Kept repaired coverage independent from accuracy, attempts and spaced-repetition scheduling.
+- Synced coverage repairs across signed-in devices and included them in progress exports/imports.
+- Counted coverage only against valid current study keys.
+
 ## Route data v2.1.1 — 2026-08-25
 
 - Added the missing Platform 3 qualifier to the Gawler Up 20 km/h approach.
