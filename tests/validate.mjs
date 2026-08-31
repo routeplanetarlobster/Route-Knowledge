@@ -124,7 +124,7 @@ assert.ok(index.includes('aria-modal="true"'), 'dialogs expose modal semantics')
 assert.ok(!app.includes('SEED_DATA'), 'quiz speeds are not duplicated');
 assert.ok(!app.includes('hasClaudeStorage'), 'legacy host storage is removed');
 assert.ok(!/show(?:Network|SpeedMap|Progress|Review|Landing)\s*=/.test(app), 'one active view controls navigation');
-assert.ok(worker.includes("route-knowledge-pwa-v22"), 'service-worker cache is versioned');
+assert.ok(worker.includes("route-knowledge-pwa-v25"), 'service-worker cache is versioned');
 assert.ok(worker.includes("images/speed-boards/outer-harbor-shared-down-80-km-6-050.jpg"), 'pilot speed-board photo is available offline');
 assert.ok(worker.includes("images/speed-boards/outer-harbor-shared-down-80-km-6-050-full.jpg"), 'full pilot speed-board photo is available offline');
 assert.ok(app.includes("rk-sm-info-tabs") && app.includes("data-sm-view=\"photo\""), 'speed-board panel includes Details and Driver view tabs');
@@ -161,6 +161,10 @@ assert.ok(app.includes('row.replaceChildren(makeResultChip())'), 'range quiz ans
 assert.ok(app.includes("input.enterKeyHint = Number(row.dataset.order) === totalBoxes - 1 ? 'done' : 'next'"), 'mobile keyboards expose next and done actions');
 assert.ok(app.includes("{id:'speeds', label:'Quiz Speeds'}") && app.includes("{id:'locations', label:'Quiz Locations'}"), 'Browse Lines offers both quiz recall modes');
 assert.ok(app.includes('buildLocationQuizQuestions') && app.includes('frequencies[locationSequenceKey(pair)] === 1'), 'location questions only use unique visible speed sequences');
+assert.ok(!app.includes("id: 'complete::' + pair.key"), 'location quizzes retain the harder exact-section matching format');
+assert.ok(app.includes("pair.from === 'Salisbury' && pair.to === 'Nurlutta'"), 'the infrequently used Salisbury siding stretch is excluded from location recall');
+assert.ok(app.includes('rk-location-speed-note') && app.includes('note.textContent = speed.note'), 'operational platform qualifiers appear beneath their speed boards');
+assert.ok(app.includes("speed.note || '\\u00a0'"), 'unlabelled location speeds reserve the same alignment space as qualified boards');
 assert.ok(app.includes("storageAdapter.set('locationQuizStats:v1'"), 'location-quiz results use their own local statistics store');
 assert.ok(app.includes('renderLocationQuizSummary'), 'location quizzes provide results and mistake review');
 const styles = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');

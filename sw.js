@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'route-knowledge-pwa-v22';
+const CACHE_VERSION = 'route-knowledge-pwa-v25';
 const APP_SHELL = [
   './',
   './index.html',

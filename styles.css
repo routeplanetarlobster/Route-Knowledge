@@ -601,6 +601,21 @@ html{
   padding:8px 12px;
   font-size:20px;
 }
+.rk-location-speed-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:5px;
+  min-width:66px;
+  min-height:63px;
+}
+.rk-location-speed-note{
+  max-width:96px;
+  color:var(--accent-1);
+  text-align:center;
+  font:600 9px/1.25 var(--font-mono);
+}
 .rk-location-sequence-arrow{
   color:var(--muted);
   font:500 17px/1 var(--font-body);
@@ -826,6 +841,8 @@ html{
   .rk-location-helper{font-size:12.5px;}
   .rk-location-sequence{min-height:88px; margin:16px 0; padding:13px 9px; gap:7px;}
   .rk-location-sequence .rk-board{min-width:58px; padding:7px 9px; font-size:18px;}
+  .rk-location-speed-item{min-width:58px;}
+  .rk-location-speed-note{max-width:82px; font-size:8px;}
   .rk-location-choice{grid-template-columns:32px minmax(0,1fr); min-height:58px; padding-right:11px; font-size:13.5px;}
   .rk-location-choice-letter{width:32px; height:32px;}
   .rk-quiz-summary{padding:22px 16px;}

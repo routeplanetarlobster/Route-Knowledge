@@ -2262,7 +2262,7 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
   }
 
   function buildLocationQuizQuestions(segs){
-    const pairs = computeRangePairs(segs);
+    const pairs = computeRangePairs(segs).filter(pair => !(pair.from === 'Salisbury' && pair.to === 'Nurlutta'));
     const frequencies = {};
     pairs.forEach(pair => {
       const signature = locationSequenceKey(pair);
@@ -2275,12 +2275,13 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     return shuffledCopy(eligible).map(pair => {
       const distractors = shuffledCopy(pairs.filter(candidate => candidate.key !== pair.key)).slice(0, 2);
       return {
-        id: pair.key,
+        id: 'match::' + pair.key,
         pair,
         options: shuffledCopy([pair, ...distractors]).map(option => ({
           key: option.key,
           label: option.from + ' → ' + option.to,
         })),
+        answerKey: pair.key,
         selectedKey: null,
         checked: false,
         recorded: false,
@@ -3938,18 +3939,26 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
   }
 
   function locationQuestionCorrect(question){
-    return question.checked && question.selectedKey === question.pair.key;
+    return question.checked && question.selectedKey === question.answerKey;
   }
 
   function renderLocationSequence(container, speeds){
     const sequence = document.createElement('div');
     sequence.className = 'rk-location-sequence';
-    sequence.setAttribute('aria-label', 'Speed sequence ' + speeds.map(speed => speed.value + ' kilometres per hour').join(', then '));
+    sequence.setAttribute('aria-label', 'Speed sequence ' + speeds.map(speed => speed.value + ' kilometres per hour' + (speed.note ? ', ' + speed.note : '')).join(', then '));
     speeds.forEach((speed, index) => {
+      const speedItem = document.createElement('div');
+      speedItem.className = 'rk-location-speed-item';
       const board = document.createElement('div');
       board.className = 'rk-board';
       board.innerHTML = escapeHtml(speed.value) + '<span class="u">km/h</span>';
-      sequence.appendChild(board);
+      speedItem.appendChild(board);
+      const note = document.createElement('span');
+      note.className = 'rk-location-speed-note';
+      note.textContent = speed.note || '\u00a0';
+      if(!speed.note) note.setAttribute('aria-hidden', 'true');
+      speedItem.appendChild(note);
+      sequence.appendChild(speedItem);
       if(index < speeds.length - 1){
         const arrow = document.createElement('span');
         arrow.className = 'rk-location-sequence-arrow';
@@ -4026,7 +4035,8 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
         yourAnswer.innerHTML = '<span>Your answer</span><strong>' + escapeHtml(chosen ? chosen.label : 'No answer') + '</strong>';
         const correctAnswer = document.createElement('div');
         correctAnswer.className = 'rk-answer-box correct';
-        correctAnswer.innerHTML = '<span>Correct location</span><strong>' + escapeHtml(question.pair.from + ' → ' + question.pair.to) + '</strong>';
+        correctAnswer.innerHTML = '<span>Correct location</span><strong>' +
+          escapeHtml(question.pair.from + ' → ' + question.pair.to) + '</strong>';
         answer.appendChild(yourAnswer);
         answer.appendChild(correctAnswer);
         row.appendChild(context);
@@ -4084,8 +4094,8 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     if(locationQuizState.questions.length === 0){
       const empty = document.createElement('div');
       empty.className = 'rk-empty';
-      empty.innerHTML = '<div class="big">No unambiguous location questions yet</div>' +
-        'This direction does not yet have a speed sequence that belongs to only one named-station section.';
+      empty.innerHTML = '<div class="big">No location questions yet</div>' +
+        'This direction does not yet have enough named-station sections to build a location quiz.';
       bodyEl.appendChild(empty);
       return;
     }
@@ -4132,8 +4142,8 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
       choice.innerHTML = '<span class="rk-location-choice-letter">' + String.fromCharCode(65 + optionIndex) + '</span>' +
         '<span>' + escapeHtml(option.label) + '</span>';
       if(question.checked){
-        if(option.key === question.pair.key) choice.classList.add('correct');
-        if(option.key === question.selectedKey && option.key !== question.pair.key) choice.classList.add('wrong');
+        if(option.key === question.answerKey) choice.classList.add('correct');
+        if(option.key === question.selectedKey && option.key !== question.answerKey) choice.classList.add('wrong');
       }
       choice.onclick = () => {
         if(question.checked) return;
@@ -4141,7 +4151,7 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
         question.checked = true;
         if(!question.recorded){
           question.recorded = true;
-          recordLocationQuizAttempt(line.id, question.pair.key, option.key === question.pair.key);
+          recordLocationQuizAttempt(line.id, question.id, option.key === question.answerKey);
         }
         renderBody();
       };

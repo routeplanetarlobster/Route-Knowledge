@@ -1,5 +1,12 @@
 # Changelog
 
+## App update — 2026-08-31
+
+- Kept qualified and unqualified speed boards aligned by reserving an equal-height label position beneath every board.
+- Restored Quiz Locations to the harder exact-section matching format after testing the missing-station variation.
+- Displayed operational qualifiers directly under their applicable boards, including Gawler Platforms 1 & 2 and Platform 3.
+- Removed the infrequently used Salisbury siding stretch from Quiz Locations without changing its source data or the normal speed quiz.
+
 ## App update — 2026-08-30
 
 - Added a `Quiz Speeds` / `Quiz Locations` switch directly to Browse Lines.
