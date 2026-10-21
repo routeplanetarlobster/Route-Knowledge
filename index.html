@@ -6688,6 +6688,28 @@ const storageAdapter = {
     workspace.appendChild(panel);page.appendChild(workspace);bodyEl.appendChild(page);
   }
 
+  function normalizeScenarioAnswerText(value){
+    return String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+  }
+  function splitScenarioAnswerList(value,expectedCount=0){
+    const items=String(value||'').split(/\r?\n|[,;]+/).map(item=>item.trim()).filter(Boolean);
+    if(expectedCount>1&&items.length===expectedCount-1){
+      const last=items.pop();const joined=String(last||'').split(/\s+and\s+/i).map(item=>item.trim()).filter(Boolean);
+      if(joined.length===2)items.push(...joined);else if(last)items.push(last);
+    }
+    return items.map(normalizeScenarioAnswerText).filter(Boolean);
+  }
+  function gradeScenarioOpenAnswer(response,approvedAnswer){
+    const approved=String(approvedAnswer||'');
+    if(/[\n,;]/.test(approved)){
+      const expectedItems=splitScenarioAnswerList(approved);const responseItems=splitScenarioAnswerList(response,expectedItems.length);
+      const expectedSet=new Set(expectedItems);const responseSet=new Set(responseItems);
+      const matched=[...expectedSet].filter(item=>responseSet.has(item)).length;
+      return {correct:expectedSet.size>0&&matched===expectedSet.size&&responseSet.size===expectedSet.size,mode:'list',matched,expected:expectedSet.size};
+    }
+    const expected=normalizeScenarioAnswerText(approvedAnswer);const actual=normalizeScenarioAnswerText(response);
+    return {correct:Boolean(actual)&&actual===expected,mode:'text',matched:actual===expected?1:0,expected:1};
+  }
   function renderScenarioLearner(content,question){
     const response=document.createElement('div');response.className='rk-scenario-response';
     const feedback=document.createElement('div');feedback.className='rk-scenario-feedback';feedback.setAttribute('aria-live','polite');
@@ -6699,9 +6721,23 @@ const storageAdapter = {
       const notes=readScenarioStore(SCENARIO_NOTE_KEY);const label=document.createElement('label');label.textContent='Practice notes or spoken-answer outline';
       const textarea=document.createElement('textarea');textarea.value=notes[question.id]||'';textarea.placeholder='Type notes here, or practise answering aloud';label.appendChild(textarea);response.appendChild(label);
       const actions=document.createElement('div');actions.className='rk-scenario-actions';
-      const save=document.createElement('button');save.type='button';save.className='rk-scenario-action primary';save.textContent='Save practice notes';save.onclick=()=>{notes[question.id]=textarea.value;writeScenarioStore(SCENARIO_NOTE_KEY,notes);feedback.className='rk-scenario-feedback good';feedback.textContent='Practice notes saved in this browser.';};actions.appendChild(save);
-      if(question.answer){const reveal=document.createElement('button');reveal.type='button';reveal.className='rk-scenario-action';reveal.textContent='Show approved answer';reveal.onclick=()=>{feedback.className='rk-scenario-feedback good';feedback.textContent=question.answer+(question.explanation?' — '+question.explanation:'');};actions.appendChild(reveal);}
-      response.appendChild(actions);feedback.textContent=question.answer?'An approved answer is available when you are ready to check.':'Approved answer pending — practise the wording and review it with your mentor.';
+      if(question.answer){
+        const submit=document.createElement('button');submit.type='button';submit.className='rk-scenario-action primary';submit.textContent='Submit answer';
+        const submitAnswer=()=>{
+          const attemptedAnswer=textarea.value.trim();
+          if(!attemptedAnswer){feedback.className='rk-scenario-feedback bad';feedback.textContent='Enter an answer before submitting.';textarea.focus();return;}
+          notes[question.id]=textarea.value;writeScenarioStore(SCENARIO_NOTE_KEY,notes);
+          const result=gradeScenarioOpenAnswer(attemptedAnswer,question.answer);
+          if(result.correct){feedback.className='rk-scenario-feedback good';feedback.textContent=result.mode==='list'?'Correct — all '+result.expected+' required items were included. Their order does not matter.':'Correct — your answer matches the approved response.';}
+          else{feedback.className='rk-scenario-feedback bad';feedback.textContent=result.mode==='list'?'Not quite — '+result.matched+' of '+result.expected+' required items matched. Check your list and try again.':'Not confirmed by the automatic check. Review your wording and try again, or discuss it with your mentor.';}
+        };
+        submit.onclick=submitAnswer;textarea.onkeydown=event=>{if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitAnswer();}};actions.appendChild(submit);
+        feedback.textContent=/[\n,;]/.test(String(question.answer))?'Enter each item separated by commas, then submit. The order does not matter.':'Enter your answer and submit it for checking. The approved answer remains hidden.';
+      }else{
+        const save=document.createElement('button');save.type='button';save.className='rk-scenario-action primary';save.textContent='Save practice notes';save.onclick=()=>{notes[question.id]=textarea.value;writeScenarioStore(SCENARIO_NOTE_KEY,notes);feedback.className='rk-scenario-feedback good';feedback.textContent='Practice notes saved in this browser.';};actions.appendChild(save);
+        feedback.textContent='Approved answer pending — practise the wording and review it with your mentor.';
+      }
+      response.appendChild(actions);
     }
     const ratings=readScenarioStore(SCENARIO_RATING_KEY);const rateActions=document.createElement('div');rateActions.className='rk-scenario-actions';
     [['review','Needs review'],['confident','Confident']].forEach(([value,label])=>{const btn=document.createElement('button');btn.type='button';btn.className='rk-scenario-action'+(ratings[question.id]===value?' good':'');btn.textContent=label;btn.onclick=()=>{ratings[question.id]=value;writeScenarioStore(SCENARIO_RATING_KEY,ratings);renderTrainingScenarios();};rateActions.appendChild(btn);});
@@ -6714,7 +6750,7 @@ const storageAdapter = {
     const row=document.createElement('div');row.className='rk-scenario-admin-row';
     const typeLabel=document.createElement('label');typeLabel.textContent='Question type';const typeSelect=document.createElement('select');[['open','Open response'],['yesno','Yes / No']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;option.selected=question.type===value;typeSelect.appendChild(option);});typeLabel.appendChild(typeSelect);row.appendChild(typeLabel);
     const sectionLabel=document.createElement('label');sectionLabel.textContent='Section';const sectionSelect=document.createElement('select');TRAINING_SCENARIO_SECTIONS.forEach(section=>{const option=document.createElement('option');option.value=section.id;option.textContent=section.label;option.selected=question.sectionId===section.id;sectionSelect.appendChild(option);});sectionLabel.appendChild(sectionSelect);row.appendChild(sectionLabel);form.appendChild(row);
-    const answerLabel=document.createElement('label');answerLabel.textContent='Approved answer';const answerInput=document.createElement('textarea');answerInput.value=question.answer||'';answerInput.placeholder='Required before production publishing';answerLabel.appendChild(answerInput);form.appendChild(answerLabel);
+    const answerLabel=document.createElement('label');answerLabel.textContent='Approved answer';const answerInput=document.createElement('textarea');answerInput.value=question.answer||'';answerInput.placeholder='Required before production publishing';answerLabel.appendChild(answerInput);const answerHint=document.createElement('span');answerHint.className='rk-scenario-count';answerHint.textContent='For list questions, separate every required item with a comma. Learner order will not matter.';answerLabel.appendChild(answerHint);form.appendChild(answerLabel);
     const explanationLabel=document.createElement('label');explanationLabel.textContent='Explanation';const explanationInput=document.createElement('textarea');explanationInput.value=question.explanation||'';explanationInput.placeholder='Why this answer is correct';explanationLabel.appendChild(explanationInput);form.appendChild(explanationLabel);
     const sourceLabel=document.createElement('label');sourceLabel.textContent='Controlled source reference';const sourceInput=document.createElement('input');sourceInput.value=question.source||'';sourceInput.placeholder='Document, drawing, page and revision';sourceLabel.appendChild(sourceInput);form.appendChild(sourceLabel);
     const validation=document.createElement('div');validation.className='rk-scenario-validation';form.appendChild(validation);
