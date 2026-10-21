@@ -1,5 +1,11 @@
 # Changelog
 
+## Route data correction — 2026-10-19
+
+- Added the missing Seaford Up 100 km/h speed change at 29.980 km between Noarlunga Centre and Christie Downs.
+- Restored the correct 70 → 100 → 110 speed progression through that section across Track Speeds, Speed Map and canonical-data consumers.
+- Bumped the PWA cache so installed copies refresh the corrected route data without changing saved learning progress.
+
 ## App update — 2026-08-31
 
 - Kept qualified and unqualified speed boards aligned by reserving an equal-height label position beneath every board.
