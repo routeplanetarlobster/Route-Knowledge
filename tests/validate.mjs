@@ -5,6 +5,7 @@ import {STUDY_SEGMENTS} from '../js/study-data.js';
 import {applyStatDeltas, mergeCoverageStates} from '../js/progress-sync.js';
 import {inferV2CompletedDirections, v2CoverageWitnessKeys} from '../js/coverage-recovery.js';
 import {SPEED_MAP_OPERATIONAL_RESTRICTIONS, applyOperationalRestrictions, effectiveSpeedMarkers} from '../js/map-restrictions.js';
+import {SPEED_BOARD_PHOTOS, SIGNAL_LOCATIONS, TRAINING_SCENARIOS} from '../js/training-content.js';
 
 const expectedLines = [
   'belair_down','belair_up','gawler_down','gawler_up','grange_down','grange_up',
@@ -80,6 +81,20 @@ assert.ok(grangeSequence.some(value => value.startsWith('Woodville Park|')), 'Gr
 assert.ok(grangeSequence.some(value => value.startsWith('Kilkenny|')), 'Grange Up includes Kilkenny');
 assert.ok(grangeSequence.some(value => value.includes('|5.788|90')), 'Grange Up inherits 90 km/h at 5.788');
 
+const seafordUp = TRACK_SPEED_DATA.seaford_up;
+const noarlungaIndex = seafordUp.findIndex(row => row.label === 'Noarlunga Centre');
+assert.deepEqual(
+  seafordUp.slice(noarlungaIndex - 1, noarlungaIndex + 4).map(row => [row.label, row.km, row.speed]),
+  [
+    [null,30.350,70],
+    ['Noarlunga Centre',30.208,null],
+    [null,29.980,100],
+    ['Christie Downs',28.900,null],
+    [null,28.826,110],
+  ],
+  'Seaford Up preserves the 70 → 100 → 110 sequence through Noarlunga Centre and Christie Downs'
+);
+
 const gawlerUp = TRACK_SPEED_DATA.gawler_up.slice(0, 8);
 assert.deepEqual(gawlerUp.map(row => [row.label, row.km, row.speed]), [
   ['End of Gawler Line',42.183,25],
@@ -124,7 +139,8 @@ assert.ok(index.includes('aria-modal="true"'), 'dialogs expose modal semantics')
 assert.ok(!app.includes('SEED_DATA'), 'quiz speeds are not duplicated');
 assert.ok(!app.includes('hasClaudeStorage'), 'legacy host storage is removed');
 assert.ok(!/show(?:Network|SpeedMap|Progress|Review|Landing)\s*=/.test(app), 'one active view controls navigation');
-assert.ok(worker.includes("route-knowledge-pwa-v25"), 'service-worker cache is versioned');
+assert.ok(worker.includes("route-knowledge-pwa-v27"), 'service-worker cache is versioned');
+assert.ok(worker.includes("js/training-content.js"), 'controlled training content is in the app shell');
 assert.ok(worker.includes("images/speed-boards/outer-harbor-shared-down-80-km-6-050.jpg"), 'pilot speed-board photo is available offline');
 assert.ok(worker.includes("images/speed-boards/outer-harbor-shared-down-80-km-6-050-full.jpg"), 'full pilot speed-board photo is available offline');
 assert.ok(app.includes("rk-sm-info-tabs") && app.includes("data-sm-view=\"photo\""), 'speed-board panel includes Details and Driver view tabs');
@@ -167,12 +183,16 @@ assert.ok(app.includes('rk-location-speed-note') && app.includes('note.textConte
 assert.ok(app.includes("speed.note || '\\u00a0'"), 'unlabelled location speeds reserve the same alignment space as qualified boards');
 assert.ok(app.includes("storageAdapter.set('locationQuizStats:v1'"), 'location-quiz results use their own local statistics store');
 assert.ok(app.includes('renderLocationQuizSummary'), 'location quizzes provide results and mistake review');
+assert.equal(SIGNAL_LOCATIONS.length, 0, 'unverified signal locations are not published');
+assert.equal(TRAINING_SCENARIOS.length, 0, 'unverified scenarios are not published');
+assert.ok(SPEED_BOARD_PHOTOS.every(photo => photo.id && photo.status === 'approved' && photo.lines.length && photo.direction && Number.isFinite(photo.km) && Number.isFinite(photo.speed)), 'speed-board photo records have controlled matching fields');
+assert.ok(app.includes("photo.status==='approved'"), 'draft photo records remain hidden from learners');
 const styles = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
 assert.ok(styles.includes('-webkit-text-size-adjust:100%'), 'mobile text scaling stays at the intended layout size');
 assert.match(styles, /\.rk-input\{[\s\S]*?font-size:16px;/, 'quiz inputs avoid iOS focus zoom');
 const rangeCommit = app.slice(app.indexOf('const commitAnswer = () =>'), app.indexOf("input.addEventListener('blur', commitAnswer)"));
 assert.ok(rangeCommit.indexOf('nextInput.focus()') < rangeCommit.indexOf('row.replaceChildren(makeResultChip())'), 'mobile quiz focus transfers before the submitted input is replaced');
-for(const asset of ['styles.css','js/app.js','js/route-data.js','js/study-data.js','js/map-data.js','js/map-restrictions.js','js/storage.js','js/progress-sync.js','js/coverage-recovery.js']){
+for(const asset of ['styles.css','js/app.js','js/route-data.js','js/study-data.js','js/map-data.js','js/map-restrictions.js','js/storage.js','js/progress-sync.js','js/coverage-recovery.js','js/training-content.js']){
   assert.ok(worker.includes(`'./${asset}'`), `${asset} is in the app shell`);
 }
 
