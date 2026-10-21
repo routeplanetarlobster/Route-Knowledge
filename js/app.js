@@ -5,6 +5,7 @@ import { applyOperationalRestrictions, effectiveSpeedMarkers } from './map-restr
 import { storageAdapter } from './storage.js';
 import { applyStatDeltas, mergePendingBatches, mergeCoverageStates } from './progress-sync.js';
 import { inferV2CompletedDirections } from './coverage-recovery.js';
+import { SPEED_BOARD_PHOTOS } from './training-content.js';
 
 (function(){
   const LINES = [
@@ -22,23 +23,6 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     {id:'belair_up', name:'Belair Line', hue:'#44b87f', direction:'Up'},
     {id:'tonsley_down', name:'Flinders Line', hue:'#e8a830', direction:'Down'},
     {id:'tonsley_up', name:'Flinders Line', hue:'#e8a830', direction:'Up'},
-  ];
-
-  // Physical board photographs are intentionally opt-in. A marker only shows
-  // a photo when an exact line, direction, speed and source kilometre match is
-  // present here, so incomplete photographic coverage never creates clutter.
-  const SPEED_BOARD_PHOTOS = [
-    {
-      lines:['outer_harbor','grange','port_dock'],
-      direction:'down',
-      km:6.050,
-      speed:80,
-      src:'./images/speed-boards/outer-harbor-shared-down-80-km-6-050.jpg',
-      fullSrc:'./images/speed-boards/outer-harbor-shared-down-80-km-6-050-full.jpg',
-      alt:'Driver view of the 80 km/h Down speed board between Kilkenny and Woodville Park',
-      caption:'Driver view · Kilkenny to Woodville Park',
-      route:'Kilkenny → Woodville Park'
-    }
   ];
 
   let activeLine = LINES[0].id;
@@ -1246,6 +1230,7 @@ import { inferV2CompletedDirections } from './coverage-recovery.js';
     function speedBoardPhoto(interval){
       if(!interval)return null;
       return SPEED_BOARD_PHOTOS.find(photo=>
+        photo.status==='approved' &&
         photo.lines.includes(speedMapLine) &&
         photo.direction===speedMapDirection &&
         photo.speed===Number(interval.speed) &&

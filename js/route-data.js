@@ -69,6 +69,7 @@ export const TRACK_SPEED_DATA = {
     {km:34.483, label:null, speed:110, comment:null},
     {km:30.350, label:null, speed:70, comment:null},
     {km:30.208, label:'Noarlunga Centre', speed:null, comment:null},
+    {km:29.980, label:null, speed:100, comment:null},
     {km:28.900, label:'Christie Downs', speed:null, comment:null},
     {km:28.826, label:null, speed:110, comment:null},
     {km:26.648, label:'Lonsdale', speed:null, comment:null},
