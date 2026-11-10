@@ -1122,6 +1122,8 @@ html, body{
 @media(max-width:560px){.rk-scenario-toolbar{align-items:stretch;flex-direction:column}.rk-scenario-role{width:100%}.rk-scenario-role button{flex:1;min-height:44px}.rk-scenario-question-list,.rk-scenario-admin-row{grid-template-columns:1fr}.rk-scenario-prompt{font-size:18px}.rk-scenario-content{padding:15px}}
 @media(max-width:560px){.rk-scenario-removed-head{flex-direction:column}.rk-scenario-removed-item{grid-template-columns:1fr}.rk-scenario-removed-item .rk-scenario-action{width:100%}}
 @media(max-width:720px){.rk-scenario-section-composer{grid-template-columns:1fr}.rk-scenario-section-composer-copy{grid-column:auto}.rk-scenario-section-composer .rk-scenario-action{width:100%}.rk-scenario-admin-tools .rk-scenario-compact-select{flex:1 1 100%}}
+/* iOS Safari zooms focused form fields whose computed text is below 16px. */
+@media(max-width:720px){.rk-root input:not([type="checkbox"]):not([type="radio"]),.rk-root textarea,.rk-root select{font-size:16px!important;line-height:1.4}}
 
 </style>
 </head>
