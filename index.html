@@ -6870,15 +6870,14 @@ const storageAdapter = {
       ['Yes','No'].forEach(value=>{const btn=document.createElement('button');btn.type='button';btn.className='rk-scenario-action';btn.textContent=value;btn.onclick=()=>{const correct=value.toLowerCase()===String(question.answer).toLowerCase();feedback.className='rk-scenario-feedback '+(correct?'good':'bad');feedback.textContent=correct?'Correct — '+question.answer+'.':'Not quite. The approved answer is '+question.answer+'.';};actions.appendChild(btn);});
       response.appendChild(actions);feedback.textContent='Choose an answer.';
     }else{
-      const notes=readScenarioStore(SCENARIO_NOTE_KEY);const label=document.createElement('label');label.textContent='Practice notes or spoken-answer outline';
-      const textarea=document.createElement('textarea');textarea.value=notes[question.id]||'';textarea.placeholder='Type notes here, or practise answering aloud';label.appendChild(textarea);response.appendChild(label);
+      const notes=readScenarioStore(SCENARIO_NOTE_KEY);const graded=Boolean(question.answer);const label=document.createElement('label');label.textContent=graded?'Your answer':'Practice notes';
+      const textarea=document.createElement('textarea');textarea.value=graded?'':(notes[question.id]||'');label.appendChild(textarea);response.appendChild(label);
       const actions=document.createElement('div');actions.className='rk-scenario-actions';
       if(question.answer){
         const submit=document.createElement('button');submit.type='button';submit.className='rk-scenario-action primary';submit.textContent='Submit answer';
         const submitAnswer=()=>{
           const attemptedAnswer=textarea.value.trim();
           if(!attemptedAnswer){feedback.className='rk-scenario-feedback bad';feedback.textContent='Enter an answer before submitting.';textarea.focus();return;}
-          notes[question.id]=textarea.value;writeScenarioStore(SCENARIO_NOTE_KEY,notes);
           const result=gradeScenarioOpenAnswer(attemptedAnswer,question.answer);
           if(result.correct){feedback.className='rk-scenario-feedback good';feedback.textContent=result.mode==='list'?'Correct — all '+result.expected+' required items were included. Their order does not matter.':'Correct — your answer matches the approved response.';}
           else{feedback.className='rk-scenario-feedback bad';feedback.textContent=result.mode==='list'?'Not quite — '+result.matched+' of '+result.expected+' required items matched. Check your list and try again.':'Not confirmed by the automatic check. Review your wording and try again, or discuss it with your mentor.';}
