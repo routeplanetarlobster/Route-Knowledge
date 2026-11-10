@@ -232,6 +232,7 @@ html{
 .rk-sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none;}
 .rk-sync-dot.synced{background:var(--green);}
 .rk-sync-dot.syncing{background:var(--yellow);box-shadow:0 0 0 3px rgba(240,180,41,.10);}
+.rk-sync-dot.local{background:var(--yellow);}
 .rk-sync-dot.error{background:var(--red);}
 .rk-account-menu-note{padding:12px 18px 10px;border-bottom:1px solid var(--steel-soft);color:var(--muted);font-size:11px;line-height:1.45;}
 .rk-account-menu-note strong{display:block;color:var(--paper);font-size:13px;margin-bottom:2px;}
@@ -1113,11 +1114,14 @@ html, body{
 .rk-training-links{font-size:12px;color:#8d98ad}.rk-training-links a{color:#43c6df}.rk-training-licence{margin-top:14px;color:#aab4c7;font-size:12px}.rk-training-licence summary{cursor:pointer;color:#dce2eb}.rk-training-licence pre{margin-top:10px;padding:14px;max-height:260px;overflow:auto;white-space:pre-wrap;background:#0c1017;border:1px solid var(--steel);border-radius:10px;font-size:10px;line-height:1.45}
 .rk-scenario-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}.rk-scenario-role{display:flex;gap:4px;padding:4px;background:#151d29;border:1px solid var(--steel);border-radius:11px}.rk-scenario-role button{min-height:40px;padding:8px 13px;border:0;border-radius:8px;background:transparent;color:#9ca8ba;font-weight:700}.rk-scenario-role button.active{background:#263345;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}.rk-scenario-count{color:#8d98ad;font-size:12px}.rk-scenario-notice{margin:12px 0 16px;padding:12px 14px;border:1px solid rgba(240,180,41,.42);border-radius:11px;background:rgba(240,180,41,.07);color:#d9c58c;font-size:12px;line-height:1.5}.rk-scenario-sections{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 16px}.rk-scenario-section-btn{min-height:58px;padding:9px 10px;border:1px solid var(--steel);border-radius:10px;background:var(--panel-raised);color:#dce3ec;text-align:left}.rk-scenario-section-btn.active{border-color:var(--accent-1);background:rgba(53,196,223,.08)}.rk-scenario-section-btn strong,.rk-scenario-section-btn span{display:block}.rk-scenario-section-btn strong{font-size:12px}.rk-scenario-section-btn span{margin-top:4px;color:#8190a5;font-size:10px}.rk-scenario-workspace{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:12px;align-items:start}.rk-scenario-question-list{display:grid;gap:7px}.rk-scenario-question-btn{display:grid;grid-template-columns:30px 1fr auto;gap:9px;align-items:center;min-height:54px;padding:8px 10px;border:1px solid var(--steel);border-radius:10px;background:#151d29;color:#dce3ec;text-align:left}.rk-scenario-question-btn.active{border-color:var(--accent-1);background:rgba(53,196,223,.08)}.rk-scenario-question-number{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#253144;color:#b9c7d5;font-family:monospace;font-size:11px}.rk-scenario-question-summary{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px}.rk-scenario-answer-dot{width:8px;height:8px;border-radius:50%;background:#556276}.rk-scenario-answer-dot.ready{background:#51c878}.rk-scenario-panel{min-width:0;border:1px solid var(--steel);border-radius:14px;background:var(--panel-raised);overflow:hidden}.rk-scenario-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px;border-bottom:1px solid var(--steel)}.rk-scenario-panel-head span{color:#8d98ad;font-size:11px}.rk-scenario-type{display:inline-flex;align-items:center;min-height:25px;padding:4px 8px;border-radius:999px;background:#253144;color:#cbd5e1!important;font-size:10px!important;font-weight:700}.rk-scenario-content{padding:18px}.rk-scenario-location{margin:0 0 10px;color:var(--accent-1);font-family:monospace;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.rk-scenario-prompt{margin:0;color:#f4f6f8;font-size:20px;line-height:1.45}.rk-scenario-response{margin-top:18px}.rk-scenario-response textarea,.rk-scenario-admin-form textarea,.rk-scenario-admin-form input,.rk-scenario-admin-form select{width:100%;min-height:44px;padding:10px 11px;border:1px solid var(--steel);border-radius:9px;background:#0e151f;color:#edf0f4;font:inherit}.rk-scenario-response textarea,.rk-scenario-admin-form textarea{min-height:88px;resize:vertical}.rk-scenario-response label,.rk-scenario-admin-form label{display:grid;gap:6px;color:#8d98ad;font-size:11px}.rk-scenario-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.rk-scenario-action{min-height:44px;padding:9px 13px;border:1px solid var(--steel);border-radius:9px;background:#1a2431;color:#dce3ec;font-weight:700}.rk-scenario-action.primary{border-color:var(--accent-1);background:var(--accent-1);color:#071317}.rk-scenario-action.good{border-color:rgba(81,200,120,.55);color:#7de39e}.rk-scenario-feedback{margin-top:12px;padding:11px 12px;border-radius:9px;background:#151d29;color:#9ca8ba;font-size:12px;line-height:1.5}.rk-scenario-feedback.good{background:rgba(81,200,120,.08);color:#7de39e}.rk-scenario-feedback.bad{background:rgba(244,102,102,.08);color:#ff9999}.rk-scenario-footer{padding:10px 15px;border-top:1px solid var(--steel);color:#7f8ba0;font-size:10px}.rk-scenario-admin-form{display:grid;gap:12px}.rk-scenario-admin-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rk-scenario-validation{display:grid;gap:6px;padding:11px 12px;border-radius:9px;background:#151d29;color:#9ca8ba;font-size:11px}.rk-scenario-validation .ok{color:#7de39e}.rk-scenario-validation .missing{color:#e8bd63}
 .rk-scenario-admin-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px}.rk-scenario-admin-tools .rk-scenario-count{margin-left:auto}.rk-scenario-action.danger{border-color:rgba(244,102,102,.55);color:#ff9999}.rk-scenario-action.danger.confirm{background:rgba(244,102,102,.14)}.rk-scenario-empty{padding:20px;border:1px dashed var(--steel);border-radius:12px;color:#8d98ad;line-height:1.55}.rk-scenario-created{color:#63d0e4!important}
+.rk-scenario-choice-list{display:grid;grid-template-columns:1fr;width:100%}.rk-scenario-choice-list .rk-scenario-action{width:100%;text-align:left}
+.rk-scenario-compact-select{min-height:44px;padding:9px 34px 9px 11px;border:1px solid var(--steel);border-radius:9px;background:#1a2431;color:#dce3ec;font:inherit;font-weight:700}.rk-scenario-section-composer{display:grid;grid-template-columns:minmax(220px,2fr) minmax(180px,1fr) auto;gap:10px;align-items:end;margin:0 0 16px;padding:14px;border:1px solid rgba(53,196,223,.45);border-radius:12px;background:rgba(53,196,223,.06)}.rk-scenario-section-composer-copy{grid-column:1/-1;display:grid;gap:4px}.rk-scenario-section-composer-copy strong{color:#edf3f7}.rk-scenario-section-composer-copy span{color:#8d98ad;font-size:11px;line-height:1.45}.rk-scenario-section-composer label{display:grid;gap:6px;color:#9ca8ba;font-size:11px}.rk-scenario-section-composer input,.rk-scenario-section-composer select{width:100%;min-height:44px;padding:9px 11px;border:1px solid var(--steel);border-radius:9px;background:#0e151f;color:#edf0f4;font:inherit}
 .rk-scenario-removed-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:4px 0 16px}.rk-scenario-removed-head h3{margin:0 0 5px;color:#fff;font-size:20px}.rk-scenario-removed-head p{margin:0;color:#8d98ad;font-size:12px}.rk-scenario-removed-list{display:grid;gap:9px}.rk-scenario-removed-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 15px;border:1px solid var(--steel);border-radius:12px;background:var(--panel-raised)}.rk-scenario-removed-meta{display:block;margin-bottom:5px;color:var(--accent-1);font-family:monospace;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}.rk-scenario-removed-question{margin:0;color:#e7ebf0;line-height:1.5}.rk-scenario-restored-note{color:#7de39e;font-size:11px}
 @media(max-width:700px){.rk-training-banner{align-items:flex-start;padding:9px 14px}.rk-training-grid{grid-template-columns:1fr}.rk-training-facts div{grid-template-columns:1fr;gap:4px}.rk-training-rule{flex-direction:column;gap:4px}}
 @media(max-width:900px){.rk-scenario-sections{grid-template-columns:repeat(2,minmax(0,1fr))}.rk-scenario-workspace{grid-template-columns:1fr}.rk-scenario-question-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.rk-scenario-toolbar{align-items:stretch;flex-direction:column}.rk-scenario-role{width:100%}.rk-scenario-role button{flex:1;min-height:44px}.rk-scenario-question-list,.rk-scenario-admin-row{grid-template-columns:1fr}.rk-scenario-prompt{font-size:18px}.rk-scenario-content{padding:15px}}
 @media(max-width:560px){.rk-scenario-removed-head{flex-direction:column}.rk-scenario-removed-item{grid-template-columns:1fr}.rk-scenario-removed-item .rk-scenario-action{width:100%}}
+@media(max-width:720px){.rk-scenario-section-composer{grid-template-columns:1fr}.rk-scenario-section-composer-copy{grid-column:auto}.rk-scenario-section-composer .rk-scenario-action{width:100%}.rk-scenario-admin-tools .rk-scenario-compact-select{flex:1 1 100%}}
 
 </style>
 </head>
@@ -1280,7 +1284,7 @@ return maplibregl$1;
 //# sourceMappingURL=maplibre-gl.js.map
 
 
-const ROUTE_KNOWLEDGE_BUILD_DATE = "2026-10-21";
+const ROUTE_KNOWLEDGE_BUILD_DATE = "2026-11-10";
 const MAPLIBRE_LICENSE_TEXT = "Copyright (c) 2023, MapLibre contributors\n\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without modification,\nare permitted provided that the following conditions are met:\n\n    * Redistributions of source code must retain the above copyright notice,\n      this list of conditions and the following disclaimer.\n    * Redistributions in binary form must reproduce the above copyright notice,\n      this list of conditions and the following disclaimer in the documentation\n      and/or other materials provided with the distribution.\n    * Neither the name of MapLibre GL JS nor the names of its contributors\n      may be used to endorse or promote products derived from this software\n      without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\nLIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\nA PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR\nCONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,\nEXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\nPROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR\nPROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF\nLIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING\nNEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\nSOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n\n-------------------------------------------------------------------------------\n\nContains code from mapbox-gl-js v1.13 and earlier\n\nVersion v1.13 of mapbox-gl-js and earlier are licensed under a BSD-3-Clause license\n\nCopyright (c) 2020, Mapbox\nRedistribution and use in source and binary forms, with or without modification,\nare permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice,\n  this list of conditions and the following disclaimer.\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n* Neither the name of Mapbox GL JS nor the names of its contributors\n  may be used to endorse or promote products derived from this software\n  without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\nLIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\nA PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR\nCONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,\nEXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\nPROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR\nPROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF\nLIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING\nNEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,\nEVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n\n-------------------------------------------------------------------------------\n\nContains code from glfx.js\n\nCopyright (C) 2011 by Evan Wallace\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n\n--------------------------------------------------------------------------------\n\nContains a portion of d3-color https://github.com/d3/d3-color\n\nCopyright 2010-2016 Mike Bostock\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without modification,\nare permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of the author nor the names of contributors may be used to\n  endorse or promote products derived from this software without specific prior\n  written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR\nANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON\nANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\nSOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n";
 const portableStorage = (() => {
   try {
@@ -4606,7 +4610,7 @@ const storageAdapter = {
   let cloudSyncState = 'idle'; // idle | syncing | synced | error
   let authMode = 'login'; // login | register
   let cloudWriteTimer = null;
-  let localModeChosen = true;
+  let localModeChosen = portableStorage.getItem('rk:localMode') === '1';
   let pendingStatDeltas = {};
   try{ pendingStatDeltas = JSON.parse(portableStorage.getItem('rk:pendingStatDeltas') || '{}') || {}; }catch(e){ pendingStatDeltas = {}; }
 
@@ -4658,7 +4662,15 @@ const storageAdapter = {
   }
 
   async function loadFirebaseSdk(){
-    throw new Error('Cloud accounts are disabled in the training edition.');
+    if(firebaseSdk) return firebaseSdk;
+    await loadScript('https://www.gstatic.com/firebasejs/13.2.0/firebase-app-compat.js');
+    await Promise.all([
+      loadScript('https://www.gstatic.com/firebasejs/13.2.0/firebase-auth-compat.js'),
+      loadScript('https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore-compat.js')
+    ]);
+    firebaseSdk = window.firebase;
+    if(!firebaseSdk) throw new Error('Firebase did not initialise.');
+    return firebaseSdk;
   }
 
   async function loadMapLibre(){
@@ -5112,8 +5124,8 @@ const storageAdapter = {
   function setCloudSyncState(state){
     cloudSyncState = state;
     if(!syncDotEl) return;
-    syncDotEl.className = 'rk-sync-dot' + (state === 'synced' ? ' synced' : state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
-    syncDotEl.title = state === 'synced' ? 'Progress synced' : state === 'syncing' ? 'Syncing progress' : state === 'error' ? 'Cloud sync problem — progress remains saved on this device' : 'Cloud sync';
+    syncDotEl.className = 'rk-sync-dot' + (state === 'synced' ? ' synced' : state === 'syncing' ? ' syncing' : state === 'local' ? ' local' : state === 'error' ? ' error' : '');
+    syncDotEl.title = state === 'synced' ? 'Progress synced' : state === 'syncing' ? 'Syncing progress' : state === 'local' ? 'Progress is saved on this device only' : state === 'error' ? 'Cloud sync problem — progress remains saved on this device' : 'Cloud sync';
   }
 
   function closeAccountMenu(){
@@ -5156,6 +5168,7 @@ const storageAdapter = {
 
   accountBtn.onclick = (e) => {
     e.stopPropagation();
+    if(!currentFirebaseUser){openAuthOverlay();return;}
     const opening = accountDropdown.style.display === 'none';
     closeMenu();
     if(opening) renderAccountMenu();
@@ -6242,9 +6255,13 @@ const storageAdapter = {
   function showSignedOutUI(){
     currentFirebaseUser = null;
     currentUsername = '';
-    accountBtn.style.display = 'none';
+    if(scenarioPublisherAuth) void scenarioPublisherAuth.signOut().catch(()=>{});
+    scenarioPublisherUser = null;
+    scenarioRole='learner';scenarioRemovedView=false;
+    accountNameEl.textContent = 'Sign in';
+    accountBtn.style.display = 'flex';
     closeAccountMenu();
-    setCloudSyncState('idle');
+    setCloudSyncState('local');
     authOverlay.classList.toggle('hidden', localModeChosen);
     setAuthBusy(false);
     authPasswordInput.value = '';
@@ -6277,6 +6294,9 @@ const storageAdapter = {
       }catch(e){
         console.error('Firebase startup failed', e);
         authMessageEl.textContent = 'Cloud sign-in is unavailable. You can continue on this device and sync later.';
+        accountNameEl.textContent = 'Sign in';
+        accountBtn.style.display = 'flex';
+        setCloudSyncState('error');
         setAuthBusy(false);
         firebaseInitPromise = null;
       }
@@ -6428,20 +6448,23 @@ const storageAdapter = {
   let scenarioQuestionId = 'adelaide-1';
   let scenarioRole = 'learner';
   let scenarioRemovedView = false;
+  let scenarioNewSectionOpen = false;
   let scenarioAdminFlash = '';
-  let scenarioAdminPassphrase = '';
   let sharedScenarioQuestions = [];
   let scenarioLoadState = 'idle';
   let scenarioDataSource = 'live';
   let scenarioLastSyncedAt = null;
   let scenarioLoadError = '';
   const SCENARIO_NOTE_KEY = 'rk:scenario-local-notes-v1';
-  const SCENARIO_RATING_KEY = 'rk:scenario-local-ratings-v1';
-  const SCENARIO_CACHE_KEY = 'rk:scenario-shared-cache-v1';
-  const SCENARIO_SUPABASE_URL = 'https://bfjmvrwzbaodlvlklybo.supabase.co';
-  const SCENARIO_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_-js3Zt7xoAnt7WbdIDKo7w_3cdl1os0';
-  const SCENARIO_ADMIN_FUNCTION_URL = SCENARIO_SUPABASE_URL + '/functions/v1/scenario-admin';
-  const SCENARIO_PUBLIC_COLUMNS = 'id,section_id,section_label,question_type,prompt,answer,explanation,source,status,sort_order,updated_at';
+  const SCENARIO_CACHE_KEY = 'rk:scenario-firestore-cache-v1';
+  const SCENARIO_FIRESTORE_COLLECTION = 'scenarioLibrary';
+  const SCENARIO_REVISION_COLLECTION = 'scenarioRevisions';
+  const SCENARIO_FIREBASE_ADMIN_EMAIL = 'publisher@routeknowledge.app';
+  const SCENARIO_FIREBASE_ADMIN_APP = 'scenario-publisher';
+  let scenarioPublisherApp = null;
+  let scenarioPublisherAuth = null;
+  let scenarioPublisherDb = null;
+  let scenarioPublisherUser = null;
 
   function readScenarioStore(key){
     try{return JSON.parse(portableStorage.getItem(key)||'{}')||{};}catch(error){return {};}
@@ -6449,21 +6472,22 @@ const storageAdapter = {
   function writeScenarioStore(key,value){
     try{portableStorage.setItem(key,JSON.stringify(value));return true;}catch(error){return false;}
   }
-  function scenarioAdminSessionIsUnlocked(){return !!scenarioAdminPassphrase;}
+  function scenarioAdminSessionIsUnlocked(){return !!(scenarioPublisherUser&&String(scenarioPublisherUser.email||'').toLowerCase()===SCENARIO_FIREBASE_ADMIN_EMAIL);}
   function scenarioFromRow(row){
     return {
       id:row.id,
-      sectionId:row.section_id,
-      sectionLabel:row.section_label,
-      type:row.question_type,
+      sectionId:row.sectionId||row.section_id,
+      sectionLabel:row.sectionLabel||row.section_label,
+      type:row.type||row.questionType||row.question_type,
       prompt:row.prompt,
       answer:row.answer||null,
+      choices:Array.isArray(row.choices)?row.choices.map(choice=>String(choice)).filter(Boolean):[],
       explanation:row.explanation||null,
       source:row.source||null,
       deleted:row.status==='archived',
       published:row.status==='published',
-      sortOrder:Number(row.sort_order)||0,
-      updatedAt:row.updated_at||null
+      sortOrder:Number(row.sortOrder??row.sort_order)||0,
+      updatedAt:row.updatedAt&&typeof row.updatedAt.toDate==='function'?row.updatedAt.toDate().toISOString():(row.updatedAt||row.updated_at||null)
     };
   }
   function scenarioToPayload(question){
@@ -6474,20 +6498,83 @@ const storageAdapter = {
       type:question.type,
       prompt:question.prompt,
       answer:question.answer||null,
+      choices:Array.isArray(question.choices)?question.choices:[],
       explanation:question.explanation||null,
       source:question.source||null
     };
   }
-  async function scenarioAdminRequest(action,payload={}){
-    const response=await fetch(SCENARIO_ADMIN_FUNCTION_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SCENARIO_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+SCENARIO_SUPABASE_PUBLISHABLE_KEY},
-      body:JSON.stringify({action,passphrase:scenarioAdminPassphrase,...payload})
+  function scenarioToFirestoreRecord(question,sortOrder){
+    return {
+      sectionId:question.sectionId,
+      sectionLabel:question.sectionLabel,
+      questionType:question.type,
+      prompt:question.prompt,
+      answer:question.answer||null,
+      choices:Array.isArray(question.choices)?question.choices:[],
+      explanation:question.explanation||null,
+      source:question.source||null,
+      status:question.deleted?'archived':'published',
+      sortOrder:Number(sortOrder??question.sortOrder)||0,
+      updatedBy:currentUsername||'admin-publisher'
+    };
+  }
+  async function ensureScenarioPublisherAuth(){
+    if(!firebaseSdk)await loadFirebaseSdk();
+    if(!scenarioPublisherApp){
+      scenarioPublisherApp=(firebaseSdk.apps||[]).find(app=>app.name===SCENARIO_FIREBASE_ADMIN_APP)||firebaseSdk.initializeApp(FIREBASE_CONFIG,SCENARIO_FIREBASE_ADMIN_APP);
+    }
+    if(!scenarioPublisherAuth){
+      scenarioPublisherAuth=scenarioPublisherApp.auth();
+      await scenarioPublisherAuth.setPersistence(firebaseSdk.auth.Auth.Persistence.NONE);
+    }
+    return scenarioPublisherAuth;
+  }
+  async function waitForScenarioPublisherToken(user){
+    await user.getIdToken(true);
+    await new Promise((resolve,reject)=>{
+      let unsubscribe=()=>{};
+      const timer=setTimeout(()=>{unsubscribe();reject(new Error('Publisher authentication timed out. Please try again.'));},8000);
+      unsubscribe=scenarioPublisherAuth.onIdTokenChanged(currentUser=>{
+        if(currentUser&&currentUser.uid===user.uid){clearTimeout(timer);unsubscribe();resolve();}
+      },error=>{clearTimeout(timer);unsubscribe();reject(error);});
     });
-    let data={};
-    try{data=await response.json();}catch(error){}
-    if(!response.ok)throw new Error(data.error||('Scenario service returned '+response.status+'.'));
-    return data;
+  }
+  async function ensureScenarioFirestore(admin=false){
+    if(admin){
+      await ensureScenarioPublisherAuth();
+      if(!scenarioAdminSessionIsUnlocked())throw new Error('Enter the shared Admin/Publisher password first.');
+      if(!scenarioPublisherDb)scenarioPublisherDb=scenarioPublisherApp.firestore();
+      return scenarioPublisherDb;
+    }
+    if(!firestoreDb)await initFirebaseAuth();
+    if(!firestoreDb)throw new Error('Firebase is not available. Check your connection and try again.');
+    return firestoreDb;
+  }
+  function firestoreRows(snapshot){return snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));}
+  async function nextScenarioSortOrder(sectionId,db){
+    const database=db||await ensureScenarioFirestore(true);const snapshot=await database.collection(SCENARIO_FIRESTORE_COLLECTION).where('sectionId','==',sectionId).get();
+    return firestoreRows(snapshot).reduce((maximum,row)=>Math.max(maximum,Number(row.sortOrder)||0),0)+1;
+  }
+  async function scenarioAdminRequest(action,payload={}){
+    const db=await ensureScenarioFirestore(true);
+    if(!scenarioAdminSessionIsUnlocked())throw new Error('Enter the shared Admin/Publisher password first.');
+    const collection=db.collection(SCENARIO_FIRESTORE_COLLECTION);const revisions=db.collection(SCENARIO_REVISION_COLLECTION);const serverTimestamp=firebaseSdk.firestore.FieldValue.serverTimestamp;
+    if(action==='authenticate')return {ok:true};
+    if(action==='list'){const snapshot=await collection.get();return {scenarios:firestoreRows(snapshot)};}
+    if(action==='create'){
+      const question={...(payload.scenario||{}),id:'q-'+crypto.randomUUID(),deleted:false};const sortOrder=await nextScenarioSortOrder(question.sectionId,db);const record=scenarioToFirestoreRecord(question,sortOrder);const ref=collection.doc(question.id);const revisionRef=revisions.doc();const batch=db.batch();
+      batch.set(ref,{...record,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});batch.set(revisionRef,{scenarioId:question.id,action:'create',snapshot:{id:question.id,...record,updatedAt:new Date().toISOString()},changedBy:currentUsername||'admin-publisher',changedAt:serverTimestamp()});await batch.commit();
+      return {scenario:{id:question.id,...record}};
+    }
+    if(action==='save'){
+      const question=payload.scenario||{};if(!question.id)throw new Error('A scenario id is required.');const ref=collection.doc(question.id);const existingSnapshot=await ref.get();if(!existingSnapshot.exists)throw new Error('The selected scenario no longer exists.');const existing=existingSnapshot.data()||{};const sortOrder=existing.sectionId===question.sectionId?(Number(existing.sortOrder)||0):await nextScenarioSortOrder(question.sectionId,db);const record=scenarioToFirestoreRecord({...question,deleted:false},sortOrder);const revisionRef=revisions.doc();const batch=db.batch();
+      batch.update(ref,{...record,updatedAt:serverTimestamp()});batch.set(revisionRef,{scenarioId:question.id,action:'save',snapshot:{id:question.id,...record,updatedAt:new Date().toISOString()},changedBy:currentUsername||'admin-publisher',changedAt:serverTimestamp()});await batch.commit();return {scenario:{id:question.id,...record}};
+    }
+    if(action==='archive'||action==='restore'){
+      const id=String(payload.id||'').trim();if(!id)throw new Error('A scenario id is required.');const ref=collection.doc(id);const existingSnapshot=await ref.get();if(!existingSnapshot.exists)throw new Error('The selected scenario no longer exists.');const status=action==='archive'?'archived':'published';const existing=existingSnapshot.data()||{};const revisionRef=revisions.doc();const batch=db.batch();
+      batch.update(ref,{status,updatedBy:currentUsername||'admin-publisher',updatedAt:serverTimestamp()});batch.set(revisionRef,{scenarioId:id,action,snapshot:{id,...existing,status,updatedAt:new Date().toISOString()},changedBy:currentUsername||'admin-publisher',changedAt:serverTimestamp()});await batch.commit();return {scenario:{id,...existing,status}};
+    }
+    throw new Error('Unknown scenario action.');
   }
   async function loadSharedScenarioLibrary(includeArchived=false){
     scenarioLoadState='loading';scenarioLoadError='';
@@ -6496,14 +6583,11 @@ const storageAdapter = {
       if(includeArchived){
         const data=await scenarioAdminRequest('list');rows=Array.isArray(data.scenarios)?data.scenarios:[];
       }else{
-        const query='?select='+encodeURIComponent(SCENARIO_PUBLIC_COLUMNS)+'&status=eq.published&order=sort_order.asc,id.asc';
-        const response=await fetch(SCENARIO_SUPABASE_URL+'/rest/v1/scenarios'+query,{headers:{apikey:SCENARIO_SUPABASE_PUBLISHABLE_KEY}});
-        if(!response.ok)throw new Error('Scenario service returned '+response.status+'.');
-        rows=await response.json();
+        const db=await ensureScenarioFirestore();const snapshot=await db.collection(SCENARIO_FIRESTORE_COLLECTION).where('status','==','published').get();rows=firestoreRows(snapshot);
       }
       sharedScenarioQuestions=rows.map(scenarioFromRow).sort((a,b)=>a.sortOrder-b.sortOrder||a.id.localeCompare(b.id));
       scenarioLastSyncedAt=new Date();scenarioDataSource='live';scenarioLoadState='ready';
-      const publishedRows=rows.filter(row=>row.status==='published');
+      const publishedRows=rows.filter(row=>row.status==='published').map(row=>({...row,updatedAt:row.updatedAt&&typeof row.updatedAt.toDate==='function'?row.updatedAt.toDate().toISOString():row.updatedAt||null}));
       writeScenarioStore(SCENARIO_CACHE_KEY,{syncedAt:scenarioLastSyncedAt.toISOString(),rows:publishedRows});
       return true;
     }catch(error){
@@ -6522,22 +6606,38 @@ const storageAdapter = {
     scenarioLoadState='loading';renderTrainingScenarios();
     void loadSharedScenarioLibrary(includeArchived).then(()=>renderTrainingScenarios());
   }
+  async function unlockScenarioPublisher(password){
+    const secret=String(password||'');
+    if(!secret)throw new Error('Enter the Admin/Publisher password.');
+    await ensureScenarioPublisherAuth();
+    const credential=await scenarioPublisherAuth.signInWithEmailAndPassword(SCENARIO_FIREBASE_ADMIN_EMAIL,secret);
+    scenarioPublisherUser=credential.user;
+    if(!scenarioAdminSessionIsUnlocked()){
+      await scenarioPublisherAuth.signOut();scenarioPublisherUser=null;
+      throw new Error('This publisher account is not authorised.');
+    }
+    await waitForScenarioPublisherToken(credential.user);
+    scenarioPublisherDb=scenarioPublisherApp.firestore();
+    return true;
+  }
   async function requestScenarioAdminAccess(){
-    if(scenarioAdminSessionIsUnlocked()){scenarioRole='admin';renderTrainingScenarios();return;}
-    const passphrase=window.prompt('Enter the shared Admin/Publisher passphrase.');
-    if(passphrase===null)return;
-    scenarioAdminPassphrase=passphrase;
     try{
+      if(!scenarioAdminSessionIsUnlocked()){
+        const password=window.prompt('Enter the shared Admin/Publisher password');
+        if(password===null)return;
+        await unlockScenarioPublisher(password);
+      }
       await scenarioAdminRequest('authenticate');
-      scenarioAdminFlash='Admin unlocked for this tab.';
+      scenarioAdminFlash='Admin unlocked for this tab. Your normal learner login remains separate.';scenarioNewSectionOpen=false;
       scenarioRole='admin';scenarioLoadState='loading';renderTrainingScenarios();
       const loaded=await loadSharedScenarioLibrary(true);
       if(!loaded)throw new Error(scenarioLoadError||'The shared admin library could not be loaded.');
       renderTrainingScenarios();
-    }catch(error){scenarioAdminPassphrase='';scenarioRole='learner';window.alert(error&&error.message?error.message:'Admin access could not be verified.');beginScenarioLoad(false);}
+    }catch(error){try{if(scenarioPublisherAuth)await scenarioPublisherAuth.signOut();}catch(signOutError){}scenarioPublisherUser=null;scenarioPublisherDb=null;scenarioRole='learner';scenarioNewSectionOpen=false;window.alert(error&&error.message?error.message:'Admin access could not be verified.');beginScenarioLoad(false);}
   }
-  function lockScenarioAdmin(){
-    scenarioAdminPassphrase='';scenarioRole='learner';scenarioRemovedView=false;scenarioAdminFlash='';beginScenarioLoad(false);
+  async function lockScenarioAdmin(){
+    try{if(scenarioPublisherAuth)await scenarioPublisherAuth.signOut();}catch(error){}
+    scenarioPublisherUser=null;scenarioPublisherDb=null;scenarioRole='learner';scenarioRemovedView=false;scenarioNewSectionOpen=false;scenarioAdminFlash='';beginScenarioLoad(false);
   }
   function scenarioBaseQuestions(){return sharedScenarioQuestions;}
   function scenarioAllQuestions(includeRemoved=false){
@@ -6547,25 +6647,60 @@ const storageAdapter = {
     return scenarioAllQuestions(includeRemoved).filter(question=>question.sectionId===sectionId);
   }
   function scenarioBaseById(id){return scenarioBaseQuestions().find(question=>question.id===id)||null;}
+  function scenarioSections(){
+    const sections=new Map(TRAINING_SCENARIO_SECTIONS.map(section=>[section.id,{id:section.id,label:section.label,builtIn:true}]));
+    sharedScenarioQuestions.forEach(question=>{
+      const id=String(question.sectionId||'').trim();
+      if(!id)return;
+      const label=String(question.sectionLabel||id).trim()||id;
+      if(!sections.has(id))sections.set(id,{id,label,builtIn:false});
+      else if(!sections.get(id).builtIn&&label)sections.get(id).label=label;
+    });
+    const values=[...sections.values()];
+    const builtIn=values.filter(section=>section.builtIn);
+    const custom=values.filter(section=>!section.builtIn).sort((a,b)=>a.label.localeCompare(b.label));
+    return [...builtIn,...custom];
+  }
   function scenarioSection(){
-    return TRAINING_SCENARIO_SECTIONS.find(section=>section.id===scenarioSectionId)||TRAINING_SCENARIO_SECTIONS[0];
+    const sections=scenarioSections();
+    return sections.find(section=>section.id===scenarioSectionId)||sections[0]||{id:'general',label:'General'};
   }
   function setScenarioSection(id){
-    const section=TRAINING_SCENARIO_SECTIONS.find(item=>item.id===id)||TRAINING_SCENARIO_SECTIONS[0];
+    const sections=scenarioSections();
+    const section=sections.find(item=>item.id===id)||sections[0]||{id:'general',label:'General'};
     scenarioSectionId=section.id;
     const questions=scenarioQuestions(section.id);
     scenarioQuestionId=questions.length?questions[0].id:null;
     renderTrainingScenarios();
   }
   function setScenarioQuestion(id){scenarioQuestionId=id;renderTrainingScenarios();}
-  function scenarioTypeLabel(type){return type==='yesno'?'Yes / No':'Open response';}
-  async function addSharedScenario(){
+  function scenarioTypeLabel(type){return type==='yesno'?'Yes / No':type==='multiple'?'Multiple choice':'Open response';}
+  function normaliseScenarioSectionId(label){
+    const base=String(label||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||'new-section';
+    const used=new Set(scenarioSections().map(section=>section.id));
+    if(!used.has(base))return base;
+    let suffix=2;while(used.has(base+'-'+suffix))suffix+=1;return base+'-'+suffix;
+  }
+  async function addSharedScenario(type='open',targetSection=scenarioSection()){
     try{
-      const data=await scenarioAdminRequest('create',{scenario:{sectionId:scenarioSectionId,sectionLabel:scenarioSection().label,type:'open',prompt:'New shared question',answer:null,explanation:null,source:null}});
+      const safeType=['open','yesno','multiple'].includes(type)?type:'open';
+      const section=targetSection&&targetSection.id?targetSection:scenarioSection();
+      const defaultPrompt=safeType==='multiple'?'New multiple-choice question':safeType==='yesno'?'New yes/no question':'New open-response question';
+      const data=await scenarioAdminRequest('create',{scenario:{sectionId:section.id,sectionLabel:section.label,type:safeType,prompt:defaultPrompt,answer:null,choices:[],explanation:null,source:null}});
+      scenarioSectionId=section.id;
       scenarioQuestionId=data.scenario&&data.scenario.id?data.scenario.id:null;
-      scenarioAdminFlash='New question created globally. Edit its wording and approved answer below.';
+      scenarioNewSectionOpen=false;
+      scenarioAdminFlash='New '+scenarioTypeLabel(safeType).toLowerCase()+' question created globally. Complete its wording and approved answer below.';
       await loadSharedScenarioLibrary(true);renderTrainingScenarios();
     }catch(error){scenarioAdminFlash=error&&error.message?error.message:'The question could not be created.';renderTrainingScenarios();}
+  }
+  async function createSharedScenarioSection(label,type='open'){
+    const sectionLabel=String(label||'').trim().replace(/\s+/g,' ');
+    if(!sectionLabel){scenarioAdminFlash='Enter a line or section name first.';renderTrainingScenarios();return;}
+    const existing=scenarioSections().find(section=>section.label.toLowerCase()===sectionLabel.toLowerCase());
+    if(existing){scenarioSectionId=existing.id;scenarioNewSectionOpen=false;scenarioAdminFlash='That section already exists. It has been selected instead.';renderTrainingScenarios();return;}
+    const section={id:normaliseScenarioSectionId(sectionLabel),label:sectionLabel,builtIn:false};
+    await addSharedScenario(type,section);
   }
   async function restoreRemovedScenario(id){
     try{await scenarioAdminRequest('restore',{id});scenarioAdminFlash='Question restored globally.';await loadSharedScenarioLibrary(true);renderTrainingScenarios();}
@@ -6588,7 +6723,7 @@ const storageAdapter = {
     removedQuestions.forEach(question=>{
       const item=document.createElement('div');item.className='rk-scenario-removed-item';
       const content=document.createElement('div');
-      const meta=document.createElement('span');meta.className='rk-scenario-removed-meta';meta.textContent=question.sectionLabel||((TRAINING_SCENARIO_SECTIONS.find(section=>section.id===question.sectionId)||{}).label||'Scenario Library');
+      const meta=document.createElement('span');meta.className='rk-scenario-removed-meta';meta.textContent=question.sectionLabel||((scenarioSections().find(section=>section.id===question.sectionId)||{}).label||'Scenario Library');
       const prompt=document.createElement('p');prompt.className='rk-scenario-removed-question';prompt.textContent=question.prompt;
       content.appendChild(meta);content.appendChild(prompt);item.appendChild(content);
       const restore=document.createElement('button');restore.type='button';restore.className='rk-scenario-action';restore.textContent='Restore';restore.setAttribute('aria-label','Restore question: '+question.prompt);restore.onclick=()=>restoreRemovedScenario(question.id);item.appendChild(restore);
@@ -6604,6 +6739,7 @@ const storageAdapter = {
       void loadSharedScenarioLibrary(false).then(()=>renderTrainingScenarios());
     }
     const allQuestions=scenarioAllQuestions();
+    const sections=scenarioSections();
     const removedQuestions=scenarioAllQuestions(true).filter(question=>question.deleted);
     const removedCount=removedQuestions.length;
     const page=document.createElement('div');page.className='rk-training-page';
@@ -6617,7 +6753,7 @@ const storageAdapter = {
       const btn=document.createElement('button');btn.type='button';btn.textContent=id==='admin'&&!scenarioAdminSessionIsUnlocked()?label+' · Locked':label;btn.className=scenarioRole===id?'active':'';btn.setAttribute('aria-pressed',String(scenarioRole===id));btn.onclick=()=>{if(id==='admin'){void requestScenarioAdminAccess();return;}scenarioRole=id;scenarioRemovedView=false;renderTrainingScenarios();};roles.appendChild(btn);
     });
     toolbar.appendChild(roles);
-    const count=document.createElement('span');count.className='rk-scenario-count';count.textContent=allQuestions.length+' questions · 10 sections';toolbar.appendChild(count);page.appendChild(toolbar);
+    const count=document.createElement('span');count.className='rk-scenario-count';count.textContent=allQuestions.length+' questions · '+sections.length+' sections';toolbar.appendChild(count);page.appendChild(toolbar);
 
     const notice=document.createElement('div');notice.className='rk-scenario-notice';
     if(scenarioLoadState==='loading')notice.textContent='Synchronising the shared scenario library…';
@@ -6638,18 +6774,28 @@ const storageAdapter = {
         const back=document.createElement('button');back.type='button';back.className='rk-scenario-action primary';back.textContent='← Back to Scenario Library';back.onclick=()=>{scenarioRemovedView=false;scenarioAdminFlash='';renderTrainingScenarios();};adminTools.appendChild(back);
         const help=document.createElement('span');help.className='rk-scenario-count';help.textContent=removedCount+' removed question'+(removedCount===1?'':'s');adminTools.appendChild(help);
       }else{
-        const add=document.createElement('button');add.type='button';add.className='rk-scenario-action primary';add.textContent='+ Add question to '+scenarioSection().label;add.onclick=()=>{void addSharedScenario();};adminTools.appendChild(add);
+        const addType=document.createElement('select');addType.className='rk-scenario-compact-select';addType.setAttribute('aria-label','New question type');[['open','Open response'],['yesno','Yes / No'],['multiple','Multiple choice']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;addType.appendChild(option);});adminTools.appendChild(addType);
+        const add=document.createElement('button');add.type='button';add.className='rk-scenario-action primary';add.textContent='+ Add to '+scenarioSection().label;add.onclick=()=>{void addSharedScenario(addType.value);};adminTools.appendChild(add);
+        const newSection=document.createElement('button');newSection.type='button';newSection.className='rk-scenario-action';newSection.textContent=scenarioNewSectionOpen?'Close new section':'＋ New line / section';newSection.onclick=()=>{scenarioNewSectionOpen=!scenarioNewSectionOpen;scenarioAdminFlash='';renderTrainingScenarios();};adminTools.appendChild(newSection);
         if(removedCount){const review=document.createElement('button');review.type='button';review.className='rk-scenario-action';review.textContent='Review removed ('+removedCount+')';review.onclick=()=>{scenarioRemovedView=true;scenarioAdminFlash='';renderTrainingScenarios();};adminTools.appendChild(review);}
         const help=document.createElement('span');help.className='rk-scenario-count';help.textContent='Changes publish globally';adminTools.appendChild(help);
       }
-      const lock=document.createElement('button');lock.type='button';lock.className='rk-scenario-action';lock.textContent='Lock admin';lock.onclick=lockScenarioAdmin;adminTools.appendChild(lock);
+      const lock=document.createElement('button');lock.type='button';lock.className='rk-scenario-action';lock.textContent='Lock admin';lock.onclick=()=>{void lockScenarioAdmin();};adminTools.appendChild(lock);
       page.appendChild(adminTools);
+      if(scenarioNewSectionOpen&&!scenarioRemovedView){
+        const composer=document.createElement('div');composer.className='rk-scenario-section-composer';
+        const copy=document.createElement('div');copy.className='rk-scenario-section-composer-copy';const title=document.createElement('strong');title.textContent='Create a new line or section';const detail=document.createElement('span');detail.textContent='Its first question is created immediately and can then be completed in the Publisher editor.';copy.appendChild(title);copy.appendChild(detail);composer.appendChild(copy);
+        const nameLabel=document.createElement('label');nameLabel.textContent='Line / section name';const nameInput=document.createElement('input');nameInput.placeholder='e.g. Port Dock or Network Rules';nameLabel.appendChild(nameInput);composer.appendChild(nameLabel);
+        const firstTypeLabel=document.createElement('label');firstTypeLabel.textContent='First question type';const firstType=document.createElement('select');[['open','Open response'],['yesno','Yes / No'],['multiple','Multiple choice']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;firstType.appendChild(option);});firstTypeLabel.appendChild(firstType);composer.appendChild(firstTypeLabel);
+        const create=document.createElement('button');create.type='button';create.className='rk-scenario-action primary';create.textContent='Create section and first question';create.onclick=()=>{create.disabled=true;create.textContent='Creating…';void createSharedScenarioSection(nameInput.value,firstType.value);};composer.appendChild(create);
+        page.appendChild(composer);setTimeout(()=>nameInput.focus(),0);
+      }
     }
 
     if(scenarioRole==='admin'&&scenarioRemovedView){renderRemovedScenarioScreen(page,removedQuestions);bodyEl.appendChild(page);return;}
 
     const sectionGrid=document.createElement('div');sectionGrid.className='rk-scenario-sections';sectionGrid.setAttribute('aria-label','Scenario sections');
-    TRAINING_SCENARIO_SECTIONS.forEach(section=>{
+    sections.forEach(section=>{
       const btn=document.createElement('button');btn.type='button';btn.className='rk-scenario-section-btn'+(section.id===scenarioSectionId?' active':'');btn.setAttribute('aria-pressed',String(section.id===scenarioSectionId));
       const sectionCount=scenarioQuestions(section.id).length;
       const strong=document.createElement('strong');strong.textContent=section.label;const small=document.createElement('span');small.textContent=sectionCount+' questions';btn.appendChild(strong);btn.appendChild(small);btn.onclick=()=>setScenarioSection(section.id);sectionGrid.appendChild(btn);
@@ -6713,7 +6859,11 @@ const storageAdapter = {
   function renderScenarioLearner(content,question){
     const response=document.createElement('div');response.className='rk-scenario-response';
     const feedback=document.createElement('div');feedback.className='rk-scenario-feedback';feedback.setAttribute('aria-live','polite');
-    if(question.type==='yesno'&&question.answer){
+    if(question.type==='multiple'&&question.answer&&Array.isArray(question.choices)&&question.choices.length>=2){
+      const actions=document.createElement('div');actions.className='rk-scenario-actions rk-scenario-choice-list';
+      question.choices.forEach((value,index)=>{const btn=document.createElement('button');btn.type='button';btn.className='rk-scenario-action';btn.textContent=String.fromCharCode(65+index)+'. '+value;btn.onclick=()=>{const correct=normalizeScenarioAnswerText(value)===normalizeScenarioAnswerText(question.answer);feedback.className='rk-scenario-feedback '+(correct?'good':'bad');feedback.textContent=correct?'Correct.':'Not quite — try another option.';};actions.appendChild(btn);});
+      response.appendChild(actions);feedback.textContent='Choose the best answer.';
+    }else if(question.type==='yesno'&&question.answer){
       const actions=document.createElement('div');actions.className='rk-scenario-actions';
       ['Yes','No'].forEach(value=>{const btn=document.createElement('button');btn.type='button';btn.className='rk-scenario-action';btn.textContent=value;btn.onclick=()=>{const correct=value.toLowerCase()===String(question.answer).toLowerCase();feedback.className='rk-scenario-feedback '+(correct?'good':'bad');feedback.textContent=correct?'Correct — '+question.answer+'.':'Not quite. The approved answer is '+question.answer+'.';};actions.appendChild(btn);});
       response.appendChild(actions);feedback.textContent='Choose an answer.';
@@ -6739,28 +6889,33 @@ const storageAdapter = {
       }
       response.appendChild(actions);
     }
-    const ratings=readScenarioStore(SCENARIO_RATING_KEY);const rateActions=document.createElement('div');rateActions.className='rk-scenario-actions';
-    [['review','Needs review'],['confident','Confident']].forEach(([value,label])=>{const btn=document.createElement('button');btn.type='button';btn.className='rk-scenario-action'+(ratings[question.id]===value?' good':'');btn.textContent=label;btn.onclick=()=>{ratings[question.id]=value;writeScenarioStore(SCENARIO_RATING_KEY,ratings);renderTrainingScenarios();};rateActions.appendChild(btn);});
-    response.appendChild(feedback);response.appendChild(rateActions);content.appendChild(response);
+    response.appendChild(feedback);content.appendChild(response);
   }
 
   function renderScenarioAdmin(content,question,baseQuestion){
     const form=document.createElement('div');form.className='rk-scenario-admin-form';
     const promptLabel=document.createElement('label');promptLabel.textContent='Question wording';const promptInput=document.createElement('textarea');promptInput.value=question.prompt;promptLabel.appendChild(promptInput);form.appendChild(promptLabel);
     const row=document.createElement('div');row.className='rk-scenario-admin-row';
-    const typeLabel=document.createElement('label');typeLabel.textContent='Question type';const typeSelect=document.createElement('select');[['open','Open response'],['yesno','Yes / No']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;option.selected=question.type===value;typeSelect.appendChild(option);});typeLabel.appendChild(typeSelect);row.appendChild(typeLabel);
-    const sectionLabel=document.createElement('label');sectionLabel.textContent='Section';const sectionSelect=document.createElement('select');TRAINING_SCENARIO_SECTIONS.forEach(section=>{const option=document.createElement('option');option.value=section.id;option.textContent=section.label;option.selected=question.sectionId===section.id;sectionSelect.appendChild(option);});sectionLabel.appendChild(sectionSelect);row.appendChild(sectionLabel);form.appendChild(row);
+    const typeLabel=document.createElement('label');typeLabel.textContent='Question type';const typeSelect=document.createElement('select');[['open','Open response'],['yesno','Yes / No'],['multiple','Multiple choice']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;option.selected=question.type===value;typeSelect.appendChild(option);});typeLabel.appendChild(typeSelect);row.appendChild(typeLabel);
+    const sectionLabel=document.createElement('label');sectionLabel.textContent='Section';const sectionSelect=document.createElement('select');scenarioSections().forEach(section=>{const option=document.createElement('option');option.value=section.id;option.textContent=section.label;option.selected=question.sectionId===section.id;sectionSelect.appendChild(option);});sectionLabel.appendChild(sectionSelect);row.appendChild(sectionLabel);form.appendChild(row);
     const answerLabel=document.createElement('label');answerLabel.textContent='Approved answer';const answerInput=document.createElement('textarea');answerInput.value=question.answer||'';answerInput.placeholder='Required before production publishing';answerLabel.appendChild(answerInput);const answerHint=document.createElement('span');answerHint.className='rk-scenario-count';answerHint.textContent='For list questions, separate every required item with a comma. Learner order will not matter.';answerLabel.appendChild(answerHint);form.appendChild(answerLabel);
+    const choicesLabel=document.createElement('label');choicesLabel.textContent='Multiple-choice options';const choicesInput=document.createElement('textarea');choicesInput.value=Array.isArray(question.choices)?question.choices.join('\n'):'';choicesInput.placeholder='Enter one option per line (2–8 options)';choicesLabel.appendChild(choicesInput);const choicesHint=document.createElement('span');choicesHint.className='rk-scenario-count';choicesHint.textContent='Learners will see these options in this order.';choicesLabel.appendChild(choicesHint);form.appendChild(choicesLabel);
+    const multipleAnswerLabel=document.createElement('label');multipleAnswerLabel.textContent='Correct option';const multipleAnswerSelect=document.createElement('select');multipleAnswerLabel.appendChild(multipleAnswerSelect);form.appendChild(multipleAnswerLabel);
     const explanationLabel=document.createElement('label');explanationLabel.textContent='Explanation';const explanationInput=document.createElement('textarea');explanationInput.value=question.explanation||'';explanationInput.placeholder='Why this answer is correct';explanationLabel.appendChild(explanationInput);form.appendChild(explanationLabel);
     const sourceLabel=document.createElement('label');sourceLabel.textContent='Controlled source reference';const sourceInput=document.createElement('input');sourceInput.value=question.source||'';sourceInput.placeholder='Document, drawing, page and revision';sourceLabel.appendChild(sourceInput);form.appendChild(sourceLabel);
     const validation=document.createElement('div');validation.className='rk-scenario-validation';form.appendChild(validation);
-    const updateValidation=()=>{validation.innerHTML='<span class="'+(answerInput.value.trim()?'ok':'missing')+'">'+(answerInput.value.trim()?'✓ Approved answer entered':'! Approved answer missing')+'</span><span class="'+(sourceInput.value.trim()?'ok':'missing')+'">'+(sourceInput.value.trim()?'✓ Source reference entered':'! Source reference missing')+'</span><span class="ok">✓ Connected to shared publishing</span>';};answerInput.oninput=updateValidation;sourceInput.oninput=updateValidation;updateValidation();
+    const parsedChoices=()=>choicesInput.value.split(/\r?\n/).map(value=>value.trim()).filter(Boolean).filter((value,index,items)=>items.indexOf(value)===index);
+    const updateValidation=()=>{const values=parsedChoices();const multiple=typeSelect.value==='multiple';const answerValue=multiple?multipleAnswerSelect.value:answerInput.value.trim();const choicesReady=!multiple||(values.length>=2&&values.length<=8);const answerReady=!!answerValue&&(!multiple||values.includes(answerValue));validation.innerHTML='<span class="'+(answerReady?'ok':'missing')+'">'+(answerReady?'✓ Approved answer entered':'! Approved answer missing')+'</span><span class="'+(choicesReady?'ok':'missing')+'">'+(choicesReady?'✓ Question options ready':'! Multiple choice needs 2–8 unique options')+'</span><span class="'+(sourceInput.value.trim()?'ok':'missing')+'">'+(sourceInput.value.trim()?'✓ Source reference entered':'! Source reference missing')+'</span><span class="ok">✓ Connected to shared publishing</span>';};
+    const refreshMultipleChoice=()=>{const multiple=typeSelect.value==='multiple';choicesLabel.style.display=multiple?'grid':'none';multipleAnswerLabel.style.display=multiple?'grid':'none';answerLabel.style.display=multiple?'none':'grid';if(multiple){const values=parsedChoices();const previous=multipleAnswerSelect.value||question.answer||'';multipleAnswerSelect.innerHTML='';const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent=values.length?'Select the correct option':'Add options above first';multipleAnswerSelect.appendChild(placeholder);values.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;option.selected=value===previous;multipleAnswerSelect.appendChild(option);});if(values.includes(previous))multipleAnswerSelect.value=previous;}updateValidation();};
+    typeSelect.onchange=refreshMultipleChoice;choicesInput.oninput=refreshMultipleChoice;multipleAnswerSelect.onchange=updateValidation;answerInput.oninput=updateValidation;sourceInput.oninput=updateValidation;refreshMultipleChoice();
     const message=document.createElement('div');message.className='rk-scenario-feedback'+(scenarioAdminFlash?' good':'');message.setAttribute('aria-live','polite');message.textContent=scenarioAdminFlash||'Saving publishes this question to every learner.';scenarioAdminFlash='';form.appendChild(message);
     const actions=document.createElement('div');actions.className='rk-scenario-actions';
     const save=document.createElement('button');save.type='button';save.className='rk-scenario-action primary';save.textContent='Save & publish globally';save.onclick=async()=>{
+      const selectedType=typeSelect.value;const choiceValues=selectedType==='multiple'?parsedChoices():[];const approvedAnswer=selectedType==='multiple'?multipleAnswerSelect.value:answerInput.value.trim();
+      if(selectedType==='multiple'&&(choiceValues.length<2||choiceValues.length>8||!choiceValues.includes(approvedAnswer))){message.className='rk-scenario-feedback bad';message.textContent='Add 2–8 unique options and select the correct option before publishing.';return;}
       save.disabled=true;save.textContent='Publishing…';message.className='rk-scenario-feedback';message.textContent='Publishing the shared question…';
-      const selectedSection=TRAINING_SCENARIO_SECTIONS.find(section=>section.id===sectionSelect.value)||scenarioSection();
-      const updated={...question,prompt:promptInput.value.trim()||question.prompt,type:typeSelect.value,sectionId:selectedSection.id,sectionLabel:selectedSection.label,answer:answerInput.value.trim()||null,explanation:explanationInput.value.trim()||null,source:sourceInput.value.trim()||null};
+      const selectedSection=scenarioSections().find(section=>section.id===sectionSelect.value)||scenarioSection();
+      const updated={...question,prompt:promptInput.value.trim()||question.prompt,type:selectedType,sectionId:selectedSection.id,sectionLabel:selectedSection.label,answer:approvedAnswer||null,choices:choiceValues,explanation:explanationInput.value.trim()||null,source:sourceInput.value.trim()||null};
       try{await scenarioAdminRequest('save',{scenario:scenarioToPayload(updated)});scenarioAdminFlash='Saved and published globally.';scenarioSectionId=selectedSection.id;scenarioQuestionId=question.id;await loadSharedScenarioLibrary(true);renderTrainingScenarios();}
       catch(error){save.disabled=false;save.textContent='Save & publish globally';message.className='rk-scenario-feedback bad';message.textContent=error&&error.message?error.message:'The shared question could not be saved.';}
     };actions.appendChild(save);
@@ -6772,7 +6927,7 @@ const storageAdapter = {
   }
 
   function renderTrainingAbout(){
-    bodyEl.innerHTML = '<div class="rk-training-page"><p class="rk-training-kicker">TRAINING EDITION</p><h2>About & Sources</h2><p class="rk-training-lead">A connected route knowledge study aid designed to support, not replace, controlled operational documents and instruction.</p><div class="rk-training-rule warning"><strong>Important</strong><span>Training aid only. Not a controlled operational document. Current authorised instructions, notices and published addenda take precedence.</span></div><dl class="rk-training-facts"><div><dt>Route data</dt><dd>Version '+escapeHtml(ROUTE_DATA_VERSION)+'</dd></div><div><dt>Training build</dt><dd>'+escapeHtml(ROUTE_KNOWLEDGE_BUILD_DATE)+'</dd></div><div><dt>Scenario Library</dt><dd>Published questions synchronise from the shared service; the last successful library is cached for temporary offline access</dd></div><div><dt>Progress</dt><dd>Stored locally in this browser; use Export Progress for backups</dd></div><div><dt>Track speeds</dt><dd>Curated from the supplied addenda information; document identifiers and formal approval remain to be recorded before official adoption</dd></div><div><dt>Street basemap</dt><dd>Interim OpenFreeMap map style using OpenStreetMap data; intended to be replaced by an organisation-approved ArcGIS service</dd></div><div><dt>Speed-board photos</dt><dd>User-supplied training images; ownership and workplace approval should be recorded before formal distribution</dd></div></dl><p class="rk-training-links"><a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap copyright and ODbL</a> · <a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre</a></p><details class="rk-training-licence"><summary>MapLibre software licence notice</summary><pre>'+escapeHtml(MAPLIBRE_LICENSE_TEXT)+'</pre></details></div>';
+    bodyEl.innerHTML = '<div class="rk-training-page"><p class="rk-training-kicker">TRAINING EDITION</p><h2>About & Sources</h2><p class="rk-training-lead">A connected route knowledge study aid designed to support, not replace, controlled operational documents and instruction.</p><div class="rk-training-rule warning"><strong>Important</strong><span>Training aid only. Not a controlled operational document. Current authorised instructions, notices and published addenda take precedence.</span></div><dl class="rk-training-facts"><div><dt>Route data</dt><dd>Version '+escapeHtml(ROUTE_DATA_VERSION)+'</dd></div><div><dt>Training build</dt><dd>'+escapeHtml(ROUTE_KNOWLEDGE_BUILD_DATE)+'</dd></div><div><dt>Scenario Library</dt><dd>Published questions synchronise through Firebase Firestore; the last successful library is cached for temporary offline access</dd></div><div><dt>Progress</dt><dd>Stored locally and synchronised to Firebase while signed in; use Export Progress for an additional backup</dd></div><div><dt>Track speeds</dt><dd>Curated from the supplied addenda information; document identifiers and formal approval remain to be recorded before official adoption</dd></div><div><dt>Street basemap</dt><dd>Interim OpenFreeMap map style using OpenStreetMap data; intended to be replaced by an organisation-approved ArcGIS service</dd></div><div><dt>Speed-board photos</dt><dd>User-supplied training images; ownership and workplace approval should be recorded before formal distribution</dd></div></dl><p class="rk-training-links"><a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap copyright and ODbL</a> · <a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre</a></p><details class="rk-training-licence"><summary>MapLibre software licence notice</summary><pre>'+escapeHtml(MAPLIBRE_LICENSE_TEXT)+'</pre></details></div>';
   }
 
   async function renderBody(){
@@ -9354,8 +9509,12 @@ const storageAdapter = {
   }
 
   renderTabs();
-  authOverlay.classList.add('hidden');
-  accountBtn.closest('.rk-account-wrap').style.display = 'none';
+  accountBtn.closest('.rk-account-wrap').style.display = '';
+  accountBtn.style.display = 'flex';
+  accountNameEl.textContent = 'Connecting…';
+  setCloudSyncState('syncing');
+  if(localModeChosen) authOverlay.classList.add('hidden');
+  void initFirebaseAuth();
   renderBody();
   updateOnlineState();
 })();
